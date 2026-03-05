@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AprendeGame — Logo</title>
+<link href="https://fontsgit initgit .googleapis.com/css2?family=Nunito:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0f0f13;
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 48px 24px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #444;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    margin-top: 40px;
+    text-align: center;
+  }
+
+  /* ─── LOGO CARD (dark bg) ─── */
+  .logo-card {
+    background: linear-gradient(135deg, #0A1628 0%, #0D2137 100%);
+    border-radius: 24px;
+    padding: 40px 52px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+  }
+
+  .logo-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* ─── ICON ─── */
+  .icon-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .icon-wrap svg {
+    display: block;
+    filter: drop-shadow(0 0 18px rgba(255, 107, 107, 0.35));
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    width: 1.5px;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent, rgba(255,107,107,0.4), transparent);
+    flex-shrink: 0;
+  }
+
+  /* ─── WORDMARK ─── */
+  .wordmark {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .brand-name {
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+    line-height: 1;
+  }
+
+  .brand-aprende {
+    font-size: 58px;
+    font-weight: 900;
+    color: #FFFFFF;
+    letter-spacing: -2px;
+    text-shadow: 0 2px 20px rgba(255,255,255,0.08);
+  }
+
+  .brand-game {
+    font-size: 58px;
+    font-weight: 900;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, #FF6B6B 0%, #FFB347 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 12px rgba(255,107,107,0.3));
+  }
+
+  .tagline {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    color: #7EC8C8;
+    opacity: 0.8;
+    text-transform: uppercase;
+    padding-left: 2px;
+  }
+
+  /* ─── ICON SVG inline ─── */
+  .controller-icon {
+    width: 100px;
+    height: 100px;
+  }
+
+  /* ─── VARIATIONS ROW ─── */
+  .variations {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Light version */
+  .logo-card.light {
+    background: #F5F5F0;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06);
+  }
+  .logo-card.light::before {
+    background-image:
+      linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+  }
+  .logo-card.light .brand-aprende { color: #0A1628; }
+  .logo-card.light .divider {
+    background: linear-gradient(to bottom, transparent, rgba(255,107,107,0.5), transparent);
+  }
+  .logo-card.light .tagline { color: #3A8A8A; opacity: 0.9; }
+
+  /* Icon only */
+  .logo-card.icon-only {
+    padding: 28px;
+    border-radius: 20px;
+  }
+
+  /* Small wordmark */
+  .logo-small .brand-aprende,
+  .logo-small .brand-game {
+    font-size: 32px;
+    letter-spacing: -1px;
+  }
+  .logo-small .tagline { font-size: 8.5px; letter-spacing: 3px; }
+  .logo-small { padding: 20px 32px; }
+  .logo-small .divider { height: 48px; }
+
+  /* Coral bg version */
+  .logo-card.coral {
+    background: linear-gradient(135deg, #FF6B6B 0%, #FF8C42 100%);
+    box-shadow: 0 20px 60px rgba(255,107,107,0.3);
+  }
+  .logo-card.coral::before { display: none; }
+  .logo-card.coral .brand-aprende { color: #FFFFFF; }
+  .logo-card.coral .brand-game { background: linear-gradient(135deg, #FFF5C0, #FFD93D); filter: none; }
+  .logo-card.coral .tagline { color: rgba(255,255,255,0.75); }
+  .logo-card.coral .divider {
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.4), transparent);
+  }
+
+  /* ─── PALETTE ─── */
+  .palette {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .swatch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .swatch-color {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+
+  .swatch-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #555;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .swatch-hex {
+    font-size: 10px;
+    font-weight: 500;
+    color: #333;
+    font-family: monospace;
+  }
+</style>
+</head>
+<body>
+
+  <p class="section-label">Versão Principal — Fundo Escuro</p>
+
+  <div class="logo-card">
+    <!-- Controller Icon -->
+    <div class="icon-wrap">
+      <svg class="controller-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FF6B6B"/>
+            <stop offset="100%" stop-color="#FFB347"/>
+          </linearGradient>
+          <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFD93D"/>
+            <stop offset="100%" stop-color="#FF6B6B"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Controller body -->
+        <path d="M 10 38 Q 10 22 28 22 L 72 22 Q 90 22 90 38 L 90 58 Q 90 66 82 70 L 68 78 Q 60 82 52 82 L 48 82 Q 40 82 32 78 L 18 70 Q 10 66 10 58 Z"
+          fill="none" stroke="url(#g1)" stroke-width="3.5" stroke-linejoin="round"/>
+
+        <!-- D-pad horizontal -->
+        <rect x="18" y="41" width="24" height="8" rx="3.5" fill="url(#g1)"/>
+        <!-- D-pad vertical -->
+        <rect x="26" y="33" width="8" height="24" rx="3.5" fill="url(#g1)"/>
+
+        <!-- Action buttons -->
+        <circle cx="70" cy="36" r="5" fill="url(#g2)"/>
+        <circle cx="80" cy="46" r="5" fill="url(#g1)"/>
+        <circle cx="70" cy="56" r="5" fill="url(#g1)" opacity="0.6"/>
+
+        <!-- Center menu button (tiny) -->
+        <rect x="45" y="44" width="10" height="6" rx="3" fill="rgba(255,255,255,0.25)"/>
+
+        <!-- Star above controller -->
+        <polygon
+          points="50,6 52.8,14.4 61.8,14.4 54.9,19.6 57.7,28 50,22.8 42.3,28 45.1,19.6 38.2,14.4 47.2,14.4"
+          fill="url(#g2)"
+          filter="drop-shadow(0 0 6px rgba(255,217,61,0.6))"
+        />
+      </svg>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="wordmark">
+      <div class="brand-name">
+        <span class="brand-aprende">Aprende</span><span class="brand-game">Game</span>
+      </div>
+      <div class="tagline">Aprenda · Evolua · Vença</div>
+    </div>
+  </div>
+
+  <!-- ─── VARIATIONS ─── -->
+  <p class="section-label">Variações</p>
+
+  <div class="variations">
+
+    <!-- Light version -->
+    <div class="logo-card light">
+      <div class="icon-wrap">
+        <svg class="controller-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gl1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FF6B6B"/><stop offset="100%" stop-color="#FFB347"/>
+            </linearGradient>
+            <linearGradient id="gl2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FFD93D"/><stop offset="100%" stop-color="#FF6B6B"/>
+            </linearGradient>
+          </defs>
+          <path d="M 10 38 Q 10 22 28 22 L 72 22 Q 90 22 90 38 L 90 58 Q 90 66 82 70 L 68 78 Q 60 82 52 82 L 48 82 Q 40 82 32 78 L 18 70 Q 10 66 10 58 Z"
+            fill="none" stroke="url(#gl1)" stroke-width="3.5" stroke-linejoin="round"/>
+          <rect x="18" y="41" width="24" height="8" rx="3.5" fill="url(#gl1)"/>
+          <rect x="26" y="33" width="8" height="24" rx="3.5" fill="url(#gl1)"/>
+          <circle cx="70" cy="36" r="5" fill="url(#gl2)"/>
+          <circle cx="80" cy="46" r="5" fill="url(#gl1)"/>
+          <circle cx="70" cy="56" r="5" fill="url(#gl1)" opacity="0.5"/>
+          <rect x="45" y="44" width="10" height="6" rx="3" fill="rgba(0,0,0,0.12)"/>
+          <polygon points="50,6 52.8,14.4 61.8,14.4 54.9,19.6 57.7,28 50,22.8 42.3,28 45.1,19.6 38.2,14.4 47.2,14.4" fill="url(#gl2)"/>
+        </svg>
+      </div>
+      <div class="divider"></div>
+      <div class="wordmark">
+        <div class="brand-name">
+          <span class="brand-aprende">Aprende</span><span class="brand-game">Game</span>
+        </div>
+        <div class="tagline">Aprenda · Evolua · Vença</div>
+      </div>
+    </div>
+
+    <!-- Coral bg version -->
+    <div class="logo-card coral">
+      <div class="icon-wrap">
+        <svg class="controller-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gc1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.9)"/><stop offset="100%" stop-color="rgba(255,255,200,0.8)"/>
+            </linearGradient>
+          </defs>
+          <path d="M 10 38 Q 10 22 28 22 L 72 22 Q 90 22 90 38 L 90 58 Q 90 66 82 70 L 68 78 Q 60 82 52 82 L 48 82 Q 40 82 32 78 L 18 70 Q 10 66 10 58 Z"
+            fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="3.5" stroke-linejoin="round"/>
+          <rect x="18" y="41" width="24" height="8" rx="3.5" fill="rgba(255,255,255,0.85)"/>
+          <rect x="26" y="33" width="8" height="24" rx="3.5" fill="rgba(255,255,255,0.85)"/>
+          <circle cx="70" cy="36" r="5" fill="#FFD93D"/>
+          <circle cx="80" cy="46" r="5" fill="rgba(255,255,255,0.75)"/>
+          <circle cx="70" cy="56" r="5" fill="rgba(255,255,255,0.5)"/>
+          <rect x="45" y="44" width="10" height="6" rx="3" fill="rgba(255,255,255,0.3)"/>
+          <polygon points="50,6 52.8,14.4 61.8,14.4 54.9,19.6 57.7,28 50,22.8 42.3,28 45.1,19.6 38.2,14.4 47.2,14.4" fill="#FFD93D"/>
+        </svg>
+      </div>
+      <div class="divider"></div>
+      <div class="wordmark">
+        <div class="brand-name">
+          <span class="brand-aprende">Aprende</span><span class="brand-game">Game</span>
+        </div>
+        <div class="tagline">Aprenda · Evolua · Vença</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── SMALL SIZE ─── -->
+  <p class="section-label">Tamanho Reduzido</p>
+
+  <div class="logo-card logo-small">
+    <div class="icon-wrap">
+      <svg width="56" height="56" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gs1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FF6B6B"/><stop offset="100%" stop-color="#FFB347"/>
+          </linearGradient>
+          <linearGradient id="gs2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFD93D"/><stop offset="100%" stop-color="#FF6B6B"/>
+          </linearGradient>
+        </defs>
+        <path d="M 10 38 Q 10 22 28 22 L 72 22 Q 90 22 90 38 L 90 58 Q 90 66 82 70 L 68 78 Q 60 82 52 82 L 48 82 Q 40 82 32 78 L 18 70 Q 10 66 10 58 Z"
+          fill="none" stroke="url(#gs1)" stroke-width="3.5" stroke-linejoin="round"/>
+        <rect x="18" y="41" width="24" height="8" rx="3.5" fill="url(#gs1)"/>
+        <rect x="26" y="33" width="8" height="24" rx="3.5" fill="url(#gs1)"/>
+        <circle cx="70" cy="36" r="5" fill="url(#gs2)"/>
+        <circle cx="80" cy="46" r="5" fill="url(#gs1)"/>
+        <circle cx="70" cy="56" r="5" fill="url(#gs1)" opacity="0.5"/>
+        <polygon points="50,6 52.8,14.4 61.8,14.4 54.9,19.6 57.7,28 50,22.8 42.3,28 45.1,19.6 38.2,14.4 47.2,14.4" fill="url(#gs2)"/>
+      </svg>
+    </div>
+    <div class="divider"></div>
+    <div class="wordmark">
+      <div class="brand-name">
+        <span class="brand-aprende">Aprende</span><span class="brand-game">Game</span>
+      </div>
+      <div class="tagline">Aprenda · Evolua · Vença</div>
+    </div>
+  </div>
+
+  <!-- ─── PALETTE ─── -->
+  <p class="section-label">Paleta de Cores</p>
+
+  <div class="palette">
+    <div class="swatch">
+      <div class="swatch-color" style="background:#0A1628;"></div>
+      <div class="swatch-label">Navy</div>
+      <div class="swatch-hex">#0A1628</div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:linear-gradient(135deg,#FF6B6B,#FFB347);"></div>
+      <div class="swatch-label">Coral→Amber</div>
+      <div class="swatch-hex">#FF6B6B</div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#FFD93D;"></div>
+      <div class="swatch-label">Star Gold</div>
+      <div class="swatch-hex">#FFD93D</div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#7EC8C8;"></div>
+      <div class="swatch-label">Teal</div>
+      <div class="swatch-hex">#7EC8C8</div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#FFFFFF; border: 1px solid #222;"></div>
+      <div class="swatch-label">White</div>
+      <div class="swatch-hex">#FFFFFF</div>
+    </div>
+  </div>
+
+</body>
+</html>

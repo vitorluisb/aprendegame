@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "wsl.exe",
+            "args": [
+                "/home/hcvitor/.config/herd-lite/bin/php",
+                "/home/hcvitor/AprendeGame/artisan",
+                "boost:mcp"
+            ]
+        }
+    }
+}
