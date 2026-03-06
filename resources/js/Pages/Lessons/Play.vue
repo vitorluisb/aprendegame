@@ -1,10 +1,14 @@
 <script setup>
-import { Head, Link, router } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { useUiSfx } from '@/Composables/useUiSfx';
+import { useRewardEffects } from '@/Composables/useRewardEffects';
 
 const props = defineProps({
     lesson: { type: Object, required: true },
     run_id: { type: Number, required: true },
+    lives_current: { type: Number, required: true },
+    lives_max: { type: Number, required: true },
     questions: { type: Array, required: true },
 });
 
@@ -17,6 +21,25 @@ const startTime = ref(Date.now());
 const feedback = ref(null); // { correct, explanation, correct_answer }
 const summary = ref(null);  // { score, xp_earned, correct_count, total_count }
 const loading = ref(false);
+const answerError = ref(null);
+const feedbackPulseKey = ref(0);
+const animatedXp = ref(0);
+const showCelebration = ref(false);
+const hasLottieCelebration = ref(false);
+const feedbackCardRef = ref(null);
+const progressFillRef = ref(null);
+const celebrationLottieRef = ref(null);
+const currentLives = ref(props.lives_current);
+const maxLives = ref(props.lives_max);
+
+const { pop, success, error: errorSfx, victory, prefersReducedMotion } = useUiSfx();
+const {
+    animateXpCounter,
+    animateProgressBar,
+    animateFeedbackCard,
+    playCelebration,
+    cleanupCelebration,
+} = useRewardEffects();
 
 const question = computed(() => props.questions[currentIndex.value] ?? null);
 const isLast = computed(() => currentIndex.value === props.questions.length - 1);
@@ -30,6 +53,7 @@ const progress = computed(() =>
 function pickOption(option) {
     if (phase.value !== 'playing') return;
     selectedAnswer.value = option;
+    pop();
 }
 
 async function submitAnswer() {
@@ -40,6 +64,8 @@ async function submitAnswer() {
         : selectedAnswer.value;
 
     if (!answer) return;
+
+    answerError.value = null;
 
     loading.value = true;
     const timeMs = Date.now() - startTime.value;
@@ -59,7 +85,19 @@ async function submitAnswer() {
             }),
         });
 
-        feedback.value = await response.json();
+        const payload = await response.json();
+
+        if (!response.ok) {
+            currentLives.value = payload.remaining_lives ?? currentLives.value;
+            maxLives.value = payload.lives_max ?? maxLives.value;
+            answerError.value = payload.message ?? 'Não foi possível enviar a resposta.';
+
+            return;
+        }
+
+        feedback.value = payload;
+        currentLives.value = payload.remaining_lives ?? currentLives.value;
+        maxLives.value = payload.lives_max ?? maxLives.value;
         phase.value = 'feedback';
     } finally {
         loading.value = false;
@@ -122,6 +160,57 @@ function scoreGrade(score) {
     if (score >= 50) return { label: 'Bom trabalho!', color: 'text-blue-600', bg: 'bg-blue-50' };
     return { label: 'Continue praticando!', color: 'text-slate-600', bg: 'bg-slate-50' };
 }
+
+watch(progress, async (value) => {
+    await nextTick();
+    animateProgressBar(progressFillRef.value, value);
+}, { immediate: true });
+
+watch(feedback, async (value) => {
+    if (!value || phase.value !== 'feedback') {
+        return;
+    }
+
+    feedbackPulseKey.value += 1;
+    await nextTick();
+    animateFeedbackCard(feedbackCardRef.value, value.correct);
+
+    if (value.correct) {
+        success();
+        return;
+    }
+
+    errorSfx();
+});
+
+watch(phase, (value) => {
+    if (value !== 'finished' || !summary.value) {
+        return;
+    }
+
+    if (prefersReducedMotion.value) {
+        animatedXp.value = summary.value.xp_earned;
+    } else {
+        animateXpCounter(animatedXp, summary.value.xp_earned);
+    }
+
+    showCelebration.value = summary.value.score >= 85;
+    hasLottieCelebration.value = false;
+
+    if (summary.value.score >= 85) {
+        victory();
+
+        if (!prefersReducedMotion.value) {
+            nextTick(() => {
+                hasLottieCelebration.value = playCelebration(celebrationLottieRef.value);
+            });
+        }
+    }
+});
+
+onBeforeUnmount(() => {
+    cleanupCelebration();
+});
 </script>
 
 <template>
@@ -141,10 +230,14 @@ function scoreGrade(score) {
                     <div class="flex-1">
                         <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
                             <span class="truncate font-medium text-slate-600">{{ lesson.title }}</span>
-                            <span v-if="phase !== 'finished'">{{ currentIndex + 1 }}/{{ questions.length }}</span>
+                            <div class="flex items-center gap-2">
+                                <span v-if="phase !== 'finished'">{{ currentIndex + 1 }}/{{ questions.length }}</span>
+                                <span class="font-semibold text-rose-500">❤ {{ currentLives }}/{{ maxLives }}</span>
+                            </div>
                         </div>
                         <div class="h-2 overflow-hidden rounded-full bg-slate-100">
                             <div
+                                ref="progressFillRef"
                                 class="h-full rounded-full bg-amber-400 transition-all duration-500"
                                 :style="{ width: (phase === 'finished' ? 100 : progress) + '%' }"
                             />
@@ -204,29 +297,37 @@ function scoreGrade(score) {
                 </div>
 
                 <!-- Feedback de resposta -->
-                <div
-                    v-if="phase === 'feedback' && feedback"
-                    class="mt-4 rounded-2xl p-4 transition-all"
-                    :class="feedback.correct ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'"
-                >
-                    <p class="font-bold" :class="feedback.correct ? 'text-green-700' : 'text-red-700'">
-                        {{ feedback.correct ? 'Correto!' : 'Incorreto' }}
-                    </p>
-                    <p v-if="!feedback.correct" class="mt-1 text-sm" :class="feedback.correct ? 'text-green-600' : 'text-red-600'">
-                        Resposta correta: <strong>{{ feedback.correct_answer }}</strong>
-                    </p>
-                    <p v-if="feedback.explanation" class="mt-1.5 text-sm text-slate-600">
-                        {{ feedback.explanation }}
-                    </p>
-                </div>
+                <p v-if="answerError" class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                    {{ answerError }}
+                </p>
+
+                <Transition name="feedback-pop">
+                    <div
+                        v-if="phase === 'feedback' && feedback"
+                        :key="feedbackPulseKey"
+                        ref="feedbackCardRef"
+                        class="mt-4 rounded-2xl border p-4 transition-all"
+                        :class="feedback.correct ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'"
+                    >
+                        <p class="font-bold" :class="feedback.correct ? 'text-green-700' : 'text-red-700'">
+                            {{ feedback.correct ? 'Correto!' : 'Incorreto' }}
+                        </p>
+                        <p v-if="!feedback.correct" class="mt-1 text-sm" :class="feedback.correct ? 'text-green-600' : 'text-red-600'">
+                            Resposta correta: <strong>{{ feedback.correct_answer }}</strong>
+                        </p>
+                        <p v-if="feedback.explanation" class="mt-1.5 text-sm text-slate-600">
+                            {{ feedback.explanation }}
+                        </p>
+                    </div>
+                </Transition>
 
                 <!-- Botões de ação -->
                 <div class="mt-6">
                     <button
                         v-if="phase === 'playing'"
                         class="w-full rounded-2xl py-4 text-base font-bold text-white shadow transition-all disabled:opacity-50"
-                        :class="(selectedAnswer || fillAnswer) ? 'bg-amber-500 active:scale-[0.98]' : 'bg-slate-300 cursor-not-allowed'"
-                        :disabled="!selectedAnswer && !fillAnswer || loading"
+                        :class="(selectedAnswer || fillAnswer) && currentLives > 0 ? 'bg-amber-500 active:scale-[0.98]' : 'bg-slate-300 cursor-not-allowed'"
+                        :disabled="(!selectedAnswer && !fillAnswer) || loading || currentLives <= 0"
                         @click="submitAnswer"
                     >
                         {{ loading ? 'Verificando...' : 'Verificar' }}
@@ -245,7 +346,13 @@ function scoreGrade(score) {
 
             <!-- Tela de resultado final -->
             <template v-else-if="phase === 'finished' && summary">
-                <div class="text-center">
+                <div class="relative overflow-hidden text-center">
+                    <div v-if="showCelebration && (prefersReducedMotion || !hasLottieCelebration)" class="lesson-confetti" />
+                    <div
+                        v-if="showCelebration && !prefersReducedMotion && hasLottieCelebration"
+                        ref="celebrationLottieRef"
+                        class="pointer-events-none absolute inset-x-0 top-0 h-36"
+                    />
                     <div
                         class="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full text-4xl font-extrabold"
                         :class="scoreGrade(summary.score).bg"
@@ -264,7 +371,7 @@ function scoreGrade(score) {
 
                     <!-- XP ganho -->
                     <div class="mt-5 inline-flex items-center gap-2 rounded-2xl bg-amber-100 px-5 py-3">
-                        <span class="text-2xl font-extrabold text-amber-600">+{{ summary.xp_earned }}</span>
+                        <span class="text-2xl font-extrabold text-amber-600">+{{ animatedXp }}</span>
                         <span class="text-sm font-semibold text-amber-700">XP ganhos</span>
                     </div>
 

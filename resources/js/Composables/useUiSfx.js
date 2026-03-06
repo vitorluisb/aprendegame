@@ -50,6 +50,10 @@ function tone(frequency, durationMs, type = 'sine', gainValue = 0.04) {
         return;
     }
 
+    if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+    }
+
     const now = ctx.currentTime;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();

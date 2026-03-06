@@ -43,12 +43,23 @@ class ShopService
                 'created_at' => now(),
             ]);
 
-            return StudentItem::create([
+            $studentItem = StudentItem::create([
                 'student_id' => $student->id,
                 'item_id' => $item->id,
                 'equipped' => false,
                 'purchased_at' => now(),
             ]);
+
+            if ($item->type === ShopItem::TYPE_AVATAR) {
+                StudentItem::where('student_id', $student->id)
+                    ->whereHas('item', fn ($query) => $query->whereIn('type', ShopItem::rawTypeCandidates(ShopItem::TYPE_AVATAR)))
+                    ->where('id', '!=', $studentItem->id)
+                    ->update(['equipped' => false]);
+
+                $studentItem->update(['equipped' => true]);
+            }
+
+            return $studentItem->refresh();
         });
     }
 
@@ -60,7 +71,7 @@ class ShopService
 
         // Unequip other items of the same type
         StudentItem::where('student_id', $student->id)
-            ->whereHas('item', fn ($q) => $q->where('type', $item->type))
+            ->whereHas('item', fn ($q) => $q->whereIn('type', ShopItem::rawTypeCandidates((string) $item->type)))
             ->where('id', '!=', $studentItem->id)
             ->update(['equipped' => false]);
 
@@ -89,5 +100,29 @@ class ShopService
             'source' => $source,
             'created_at' => now(),
         ]);
+    }
+
+    public function buyLife(Student $student): Student
+    {
+        if ($student->isAtMaxLives()) {
+            throw new RuntimeException('Você já está com vidas máximas.');
+        }
+
+        if ($student->totalGems() < Student::LIFE_PURCHASE_COST) {
+            throw new RuntimeException('Neurons insuficientes para comprar uma vida.');
+        }
+
+        return DB::transaction(function () use ($student): Student {
+            GemTransaction::create([
+                'student_id' => $student->id,
+                'amount' => -Student::LIFE_PURCHASE_COST,
+                'source' => 'buy_life',
+                'created_at' => now(),
+            ]);
+
+            $student->recoverLife();
+
+            return $student->refresh();
+        });
     }
 }

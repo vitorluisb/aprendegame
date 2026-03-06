@@ -2,6 +2,7 @@
 
 namespace App\Domain\Gameplay\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,28 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ShopItem extends Model
 {
     use HasFactory;
+
+    public const TYPE_AVATAR = 'avatar';
+
+    public const TYPE_FRAME = 'frame';
+
+    public const TYPE_THEME = 'theme';
+
+    public const TYPE_POWER_UP = 'power_up';
+
+    /** @var array<string> */
+    public const TYPES = [
+        self::TYPE_AVATAR,
+        self::TYPE_FRAME,
+        self::TYPE_THEME,
+        self::TYPE_POWER_UP,
+    ];
+
+    /** @var array<string, string> */
+    public const TYPE_ALIASES = [
+        'border' => self::TYPE_FRAME,
+        'powerup' => self::TYPE_POWER_UP,
+    ];
 
     protected $fillable = [
         'name',
@@ -28,6 +51,33 @@ class ShopItem extends Model
             'gem_price' => 'integer',
             'metadata' => 'array',
         ];
+    }
+
+    protected function type(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => $value === null ? null : self::normalizeType($value),
+            set: fn (?string $value): ?string => $value === null ? null : self::normalizeType($value),
+        );
+    }
+
+    public static function normalizeType(string $type): string
+    {
+        $normalized = strtolower(trim($type));
+
+        return self::TYPE_ALIASES[$normalized] ?? $normalized;
+    }
+
+    /** @return array<string> */
+    public static function rawTypeCandidates(string $type): array
+    {
+        $normalized = self::normalizeType($type);
+        $aliases = array_keys(array_filter(
+            self::TYPE_ALIASES,
+            fn (string $canonicalType): bool => $canonicalType === $normalized
+        ));
+
+        return array_values(array_unique([$normalized, ...$aliases]));
     }
 
     public function studentItems(): HasMany

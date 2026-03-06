@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ShopItems\Tables;
 
+use App\Domain\Gameplay\Models\ShopItem;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -26,17 +27,17 @@ class ShopItemsTable
                     ->label('Tipo')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'avatar' => 'info',
-                        'frame' => 'warning',
-                        'theme' => 'success',
-                        'power_up' => 'danger',
+                        ShopItem::TYPE_AVATAR => 'info',
+                        ShopItem::TYPE_FRAME => 'warning',
+                        ShopItem::TYPE_THEME => 'success',
+                        ShopItem::TYPE_POWER_UP => 'danger',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'avatar' => 'Avatar',
-                        'frame' => 'Moldura',
-                        'theme' => 'Tema',
-                        'power_up' => 'Power-up',
+                        ShopItem::TYPE_AVATAR => 'Avatar',
+                        ShopItem::TYPE_FRAME => 'Moldura',
+                        ShopItem::TYPE_THEME => 'Tema',
+                        ShopItem::TYPE_POWER_UP => 'Power-up',
                         default => $state,
                     }),
 
@@ -56,10 +57,10 @@ class ShopItemsTable
                 SelectFilter::make('type')
                     ->label('Tipo')
                     ->options([
-                        'avatar' => 'Avatar',
-                        'frame' => 'Moldura',
-                        'theme' => 'Tema',
-                        'power_up' => 'Power-up',
+                        ShopItem::TYPE_AVATAR => 'Avatar',
+                        ShopItem::TYPE_FRAME => 'Moldura',
+                        ShopItem::TYPE_THEME => 'Tema',
+                        ShopItem::TYPE_POWER_UP => 'Power-up',
                     ]),
 
                 TernaryFilter::make('active')

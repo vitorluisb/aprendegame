@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AI\TutorChatController;
 use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\Dashboard\DashboardController;
@@ -60,6 +61,9 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/loja', [ShopController::class, 'index'])->name('shop.index');
     Route::post('/loja/comprar', [ShopController::class, 'purchase'])->name('shop.purchase');
     Route::post('/loja/equipar', [ShopController::class, 'equip'])->name('shop.equip');
+    Route::post('/loja/vidas/comprar', [ShopController::class, 'buyLife'])->name('shop.buy-life');
+    Route::get('/tutor', [TutorChatController::class, 'index'])->name('tutor.index');
+    Route::post('/tutor/mensagens', [TutorChatController::class, 'store'])->name('tutor.store');
     Route::get('/teacher/dashboard', [TeacherDashboardController::class, 'index'])->name('teacher.dashboard');
 
     Route::middleware('role:teacher,school_admin,super_admin')->group(function (): void {

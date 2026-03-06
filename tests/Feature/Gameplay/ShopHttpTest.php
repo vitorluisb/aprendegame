@@ -36,6 +36,8 @@ it('student can view shop page with items and gems', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('Shop/Index')
             ->where('gems_balance', 180)
+            ->where('lives_current', 5)
+            ->where('lives_max', 5)
             ->has('items', 1)
             ->where('items.0.name', 'Avatar Azul')
             ->where('items.0.is_owned', false)
@@ -69,6 +71,8 @@ it('user with student profile can view shop page even with non-student role', fu
         ->assertInertia(fn (Assert $page) => $page
             ->component('Shop/Index')
             ->where('gems_balance', 180)
+            ->where('lives_current', 5)
+            ->where('lives_max', 5)
             ->has('items', 1)
             ->where('items.0.name', 'Avatar Azul')
             ->where('items.0.is_owned', false)
@@ -91,6 +95,28 @@ it('student can purchase an item from shop page', function () {
 
     expect(StudentItem::where('student_id', $student->id)->where('item_id', $item->id)->exists())->toBeTrue();
     expect($student->fresh()->totalGems())->toBe(110);
+});
+
+it('student auto equips avatar right after purchase', function () {
+    $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
+    $student = Student::factory()->create(['user_id' => $user->id, 'school_id' => null]);
+    $item = ShopItem::factory()->avatar()->create(['gem_price' => 90, 'active' => true]);
+
+    GemTransaction::factory()->create([
+        'student_id' => $student->id,
+        'amount' => 200,
+    ]);
+
+    $this->actingAs($user)
+        ->post('/loja/comprar', ['item_id' => $item->id])
+        ->assertRedirect();
+
+    expect(
+        StudentItem::where('student_id', $student->id)
+            ->where('item_id', $item->id)
+            ->first()
+            ?->equipped
+    )->toBeTrue();
 });
 
 it('user with student profile can purchase an item from shop page', function () {
@@ -162,5 +188,53 @@ it('student without profile can still access shop page', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('Shop/Index')
             ->where('gems_balance', 0)
+            ->where('lives_current', 5)
+            ->where('lives_max', 5)
         );
+});
+
+it('student can buy one life in shop', function () {
+    $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
+    $student = Student::factory()->create([
+        'user_id' => $user->id,
+        'school_id' => null,
+        'lives_current' => 3,
+        'lives_max' => 5,
+    ]);
+
+    GemTransaction::factory()->create([
+        'student_id' => $student->id,
+        'amount' => 200,
+    ]);
+
+    $this->actingAs($user)
+        ->post('/loja/vidas/comprar')
+        ->assertRedirect();
+
+    expect($student->fresh()->lives_current)->toBe(4);
+    expect($student->fresh()->totalGems())->toBe(160);
+});
+
+it('buy life fails when student is at max lives', function () {
+    $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
+    $student = Student::factory()->create([
+        'user_id' => $user->id,
+        'school_id' => null,
+        'lives_current' => 5,
+        'lives_max' => 5,
+    ]);
+
+    GemTransaction::factory()->create([
+        'student_id' => $student->id,
+        'amount' => 200,
+    ]);
+
+    $this->actingAs($user)
+        ->from('/loja')
+        ->post('/loja/vidas/comprar')
+        ->assertRedirect('/loja')
+        ->assertSessionHasErrors('shop');
+
+    expect($student->fresh()->lives_current)->toBe(5);
+    expect($student->fresh()->totalGems())->toBe(200);
 });

@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { useUiSfx } from '@/Composables/useUiSfx';
 
@@ -9,6 +9,7 @@ const props = defineProps({
     student: { type: Object, default: null },
     grade_options: { type: Array, default: () => [] },
 });
+const page = usePage();
 
 const gradeForm = useForm({
     grade_id: props.student?.grade_id ?? '',
@@ -31,13 +32,36 @@ const xpPercent = computed(() => {
 
     return props.student.xp_in_level;
 });
+const equippedFrameStyle = computed(() => page.props.gameplay_customization?.frame?.style ?? null);
+const equippedFrameClass = computed(() => {
+    const slug = page.props.gameplay_customization?.frame?.slug;
+
+    if (slug === 'borda-fogo') {
+        return 'game-avatar-frame--fire';
+    }
+
+    if (slug === 'borda-arco-iris') {
+        return 'game-avatar-frame--rainbow';
+    }
+
+    if (slug) {
+        return 'game-avatar-frame--gold';
+    }
+
+    return '';
+});
+const heroStyle = computed(() => ({
+    background: 'linear-gradient(135deg, var(--color-game-hero-start), var(--color-game-hero-mid), var(--color-game-hero-end))',
+}));
 
 function typeLabel(type) {
     const map = {
         avatar: 'Avatar',
         frame: 'Moldura',
+        border: 'Moldura',
         theme: 'Tema',
         power_up: 'Power-up',
+        powerup: 'Power-up',
     };
 
     return map[type] ?? type;
@@ -78,7 +102,7 @@ function onAvatarSelected(event) {
 
     <AppLayout title="Perfil">
         <template v-if="student">
-            <section class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500 via-indigo-500 to-blue-600 p-5 text-white shadow-xl">
+            <section class="relative overflow-hidden rounded-2xl p-5 text-white shadow-xl" :style="heroStyle">
                 <div class="game-shimmer pointer-events-none absolute inset-0 opacity-25" />
                 <div class="flex items-start justify-between gap-3">
                     <div>
@@ -109,7 +133,7 @@ function onAvatarSelected(event) {
                 <div class="mt-3 grid grid-cols-2 gap-3">
                     <article class="rounded-xl border border-slate-200 bg-white p-3 text-center">
                         <p class="text-[11px] font-semibold text-slate-500">Avatar ativo</p>
-                        <div class="mx-auto mt-2 h-16 w-16 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                        <div class="mx-auto mt-2 h-16 w-16 overflow-hidden rounded-full border border-slate-200 bg-slate-100" :class="equippedFrameClass" :style="equippedFrameStyle">
                             <img v-if="student.avatar_url" :src="student.avatar_url" alt="Avatar ativo" class="h-full w-full object-cover">
                             <div v-else class="flex h-full w-full items-center justify-center text-lg font-bold text-slate-500">
                                 {{ student.name?.[0] ?? '?' }}
@@ -144,7 +168,7 @@ function onAvatarSelected(event) {
                 </article>
 
                 <article class="game-surface p-4">
-                    <p class="text-xs font-medium text-slate-500">Saldo de gemas</p>
+                    <p class="text-xs font-medium text-slate-500">Saldo de Neurons</p>
                     <p class="mt-1 text-3xl font-bold text-cyan-600">{{ student.total_gems }}</p>
                     <p class="text-xs text-slate-400">para gastar na loja</p>
                     <p class="mt-1 text-xs text-slate-400">Itens: {{ student.inventory_count }}</p>

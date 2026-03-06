@@ -8,8 +8,10 @@ defineProps({ title: { type: String, default: '' } });
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
+const gameplayCustomization = computed(() => page.props.gameplay_customization ?? null);
 const currentUrl = computed(() => page.url ?? '');
 const { isEnabled, pop, toggle } = useUiSfx();
+const appStyle = computed(() => gameplayCustomization.value?.theme?.css_vars ?? {});
 
 function isActive(path) {
     const url = currentUrl.value;
@@ -22,7 +24,7 @@ function onNavTap() {
 </script>
 
 <template>
-    <div class="relative min-h-screen overflow-hidden bg-[var(--color-game-bg)] pb-20 text-[var(--color-game-ink)]">
+    <div class="relative min-h-screen overflow-hidden bg-[var(--color-game-bg)] pb-20 text-[var(--color-game-ink)]" :style="appStyle">
         <div class="pointer-events-none absolute -left-16 -top-20 h-56 w-56 rounded-full bg-[color:var(--color-game-teal)]/35 blur-3xl [animation:floatY_9s_ease-in-out_infinite]" />
         <div class="pointer-events-none absolute -right-20 top-24 h-64 w-64 rounded-full bg-[color:var(--color-game-deep)]/25 blur-3xl [animation:floatY_11s_ease-in-out_infinite]" />
         <div class="pointer-events-none absolute bottom-16 left-1/3 h-40 w-40 rounded-full bg-[color:var(--color-game-accent-3)]/45 blur-3xl [animation:glowPulse_6s_ease-in-out_infinite]" />

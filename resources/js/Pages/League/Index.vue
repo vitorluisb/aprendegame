@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 
 const props = defineProps({
     scope: { type: String, required: true },
@@ -10,6 +10,12 @@ const props = defineProps({
     entries: { type: Array, default: () => [] },
     my_position: { type: Object, required: true },
 });
+const page = usePage();
+const equippedFrameStyle = page.props.gameplay_customization?.frame?.style ?? null;
+const equippedFrameSlug = page.props.gameplay_customization?.frame?.slug ?? null;
+const heroStyle = {
+    background: 'linear-gradient(135deg, var(--color-game-hero-start), var(--color-game-hero-mid), var(--color-game-hero-end))',
+};
 
 function leagueLabel(league) {
     const map = {
@@ -36,13 +42,37 @@ function leagueClass(league) {
 function initialFromName(name) {
     return name?.[0]?.toUpperCase?.() ?? '?';
 }
+
+function frameClass(entry) {
+    if (!entry?.is_me || !equippedFrameSlug) {
+        return '';
+    }
+
+    if (equippedFrameSlug === 'borda-fogo') {
+        return 'game-avatar-frame--fire';
+    }
+
+    if (equippedFrameSlug === 'borda-arco-iris') {
+        return 'game-avatar-frame--rainbow';
+    }
+
+    return 'game-avatar-frame--gold';
+}
+
+function rankBadge(rank) {
+    if (rank === 1) return '🥇';
+    if (rank === 2) return '🥈';
+    if (rank === 3) return '🥉';
+
+    return `#${rank}`;
+}
 </script>
 
 <template>
     <Head title="Ranking" />
 
     <AppLayout title="Ranking Semanal">
-        <section class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-sky-500 p-5 text-white shadow-xl">
+        <section class="relative overflow-hidden rounded-2xl p-5 text-white shadow-xl" :style="heroStyle">
             <div class="game-shimmer pointer-events-none absolute inset-0 opacity-25" />
             <p class="text-xs font-semibold uppercase tracking-wide text-white/80">Liga da Semana {{ week }}/{{ year }}</p>
             <div class="mt-3 grid grid-cols-3 gap-3 text-center">
@@ -65,19 +95,32 @@ function initialFromName(name) {
             </p>
         </section>
 
+        <section class="mt-4 grid grid-cols-2 gap-3">
+            <article class="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-100 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wide text-violet-500">Sua posição</p>
+                <p class="mt-1 text-2xl font-black text-slate-800">{{ rankBadge(my_position.rank) }}</p>
+                <p class="text-xs text-slate-500">na liga semanal</p>
+            </article>
+            <article class="rounded-2xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-sky-100 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wide text-cyan-600">Seu resultado</p>
+                <p class="mt-1 text-2xl font-black text-slate-800">{{ my_position.weekly_xp }} XP</p>
+                <p class="text-xs text-slate-500">{{ leagueLabel(my_position.league) }}</p>
+            </article>
+        </section>
+
         <section class="mt-4">
-            <h2 class="mb-2 text-sm font-semibold text-slate-700">Classificação</h2>
+            <h2 class="mb-2 text-sm font-semibold text-slate-700">Classificação da Semana</h2>
 
             <div v-if="entries.length" class="space-y-2">
                 <article
                     v-for="entry in entries"
                     :key="entry.student.id"
-                    class="game-surface flex items-center justify-between rounded-xl px-4 py-3"
-                    :class="entry.is_me ? 'ring-2 ring-indigo-300' : ''"
+                    class="relative overflow-hidden rounded-2xl border bg-white px-4 py-3 shadow-sm"
+                    :class="entry.is_me ? 'border-indigo-300 ring-2 ring-indigo-200 bg-indigo-50/40' : 'border-slate-200'"
                 >
                     <div class="flex min-w-0 items-center gap-3">
-                        <p class="w-8 text-center text-sm font-bold text-slate-500">#{{ entry.rank }}</p>
-                        <div class="h-9 w-9 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                        <p class="w-10 text-center text-sm font-black text-slate-600">{{ rankBadge(entry.rank) }}</p>
+                        <div class="h-10 w-10 overflow-hidden rounded-full border border-slate-200 bg-slate-100" :class="frameClass(entry)" :style="entry.is_me ? equippedFrameStyle : null">
                             <img v-if="entry.student.avatar_url" :src="entry.student.avatar_url" :alt="`Avatar de ${entry.student.name}`" class="h-full w-full object-cover">
                             <div v-else class="flex h-full w-full items-center justify-center text-xs font-bold text-slate-600">
                                 {{ initialFromName(entry.student.name) }}
@@ -85,11 +128,11 @@ function initialFromName(name) {
                         </div>
                         <div class="min-w-0">
                             <p class="truncate text-sm font-semibold text-slate-800">{{ entry.student.name }}</p>
-                            <p v-if="entry.is_me" class="text-xs font-medium text-indigo-600">Você</p>
+                            <p v-if="entry.is_me" class="text-xs font-bold text-indigo-600">Você</p>
                         </div>
                     </div>
 
-                    <p class="text-sm font-bold text-slate-700">{{ entry.weekly_xp }} XP</p>
+                    <p class="text-sm font-black text-slate-700">{{ entry.weekly_xp }} XP</p>
                 </article>
             </div>
 

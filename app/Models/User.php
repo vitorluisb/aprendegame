@@ -23,6 +23,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens;
+
     use HasFactory;
     use Notifiable;
     use TwoFactorAuthenticatable;
@@ -99,6 +100,9 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
                     'grade_id' => null,
                     'name' => $this->name,
                     'avatar_url' => $this->avatar_url,
+                    'lives_current' => Student::DEFAULT_LIVES,
+                    'lives_max' => Student::DEFAULT_LIVES,
+                    'lives_refilled_at' => now(),
                 ],
             );
     }

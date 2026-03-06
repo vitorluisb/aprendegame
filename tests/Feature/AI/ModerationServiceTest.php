@@ -26,31 +26,31 @@ it('case insensitive blocking', function () {
     expect($service->isBlocked('Violencia no mundo'))->toBeTrue();
 });
 
-it('child student has daily limit of 20 messages', function () {
+it('child student has daily limit of 15 messages', function () {
     $student = Student::factory()->create([
         'birth_date' => now()->subYears(10)->toDateString(),
     ]);
     $service = app(ModerationService::class);
 
-    expect($service->dailyLimitFor($student))->toBe(20);
+    expect($service->dailyLimitFor($student))->toBe(15);
 });
 
-it('teen student has daily limit of 40 messages', function () {
+it('teen student has daily limit of 15 messages', function () {
     $student = Student::factory()->create([
         'birth_date' => now()->subYears(15)->toDateString(),
     ]);
     $service = app(ModerationService::class);
 
-    expect($service->dailyLimitFor($student))->toBe(40);
+    expect($service->dailyLimitFor($student))->toBe(15);
 });
 
-it('adult student has daily limit of 100 messages', function () {
+it('adult student has daily limit of 15 messages', function () {
     $student = Student::factory()->create([
         'birth_date' => now()->subYears(20)->toDateString(),
     ]);
     $service = app(ModerationService::class);
 
-    expect($service->dailyLimitFor($student))->toBe(100);
+    expect($service->dailyLimitFor($student))->toBe(15);
 });
 
 it('detects when daily limit is reached', function () {
@@ -59,7 +59,7 @@ it('detects when daily limit is reached', function () {
     ]);
     $service = app(ModerationService::class);
 
-    TutorMessage::factory()->count(20)->create([
+    TutorMessage::factory()->count(15)->create([
         'student_id' => $student->id,
         'role' => 'student',
         'blocked' => false,
@@ -95,5 +95,5 @@ it('returns correct remaining messages count', function () {
         'blocked' => false,
     ]);
 
-    expect($service->remainingMessages($student))->toBe(15);
+    expect($service->remainingMessages($student))->toBe(10);
 });

@@ -5,12 +5,15 @@ use App\Domain\Accounts\Models\SchoolClass;
 use App\Domain\Accounts\Models\Student;
 use App\Domain\Content\Models\Grade;
 use App\Domain\Content\Models\Path;
+use App\Domain\Content\Models\PathNode;
 use App\Domain\Gameplay\Models\Badge;
 use App\Domain\Gameplay\Models\GemTransaction;
+use App\Domain\Gameplay\Models\Lesson;
+use App\Domain\Gameplay\Models\LessonRun;
 use App\Domain\Gameplay\Models\ShopItem;
+use App\Domain\Gameplay\Models\Streak;
 use App\Domain\Gameplay\Models\StudentBadge;
 use App\Domain\Gameplay\Models\StudentItem;
-use App\Domain\Gameplay\Models\Streak;
 use App\Domain\Gameplay\Models\XpTransaction;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -102,6 +105,97 @@ it('student dashboard loads successfully', function () {
             ->where('role', 'student')
             ->has('student')
             ->where('student.name', $user->name)
+        );
+});
+
+it('student dashboard refills one life per hour elapsed', function () {
+    $user = User::factory()->create(['role' => 'student']);
+    $student = Student::factory()->create([
+        'user_id' => $user->id,
+        'lives_current' => 2,
+        'lives_max' => 5,
+        'lives_refilled_at' => now()->subHours(2),
+    ]);
+
+    $this->actingAs($user)
+        ->get('/dashboard')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('student.lives_current', 4)
+            ->where('student.lives_max', 5)
+        );
+
+    expect($student->fresh()->lives_current)->toBe(4);
+});
+
+it('student dashboard shows latest completed lesson activity and xp', function () {
+    $path = Path::factory()->published()->create(['title' => 'Trilha de Matemática']);
+    $node = PathNode::factory()->forPath($path)->create(['title' => 'Frações']);
+    $lesson = Lesson::factory()->forNode($node)->create(['title' => 'Aula de Frações']);
+    $user = User::factory()->create(['role' => 'student']);
+    $student = Student::factory()->create(['user_id' => $user->id, 'name' => 'Aluno Ativo']);
+
+    LessonRun::factory()->create([
+        'student_id' => $student->id,
+        'lesson_id' => $lesson->id,
+        'finished_at' => now()->subMinute(),
+        'xp_earned' => 35,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/dashboard')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('student.last_activity.path_title', 'Trilha de Matemática')
+            ->where('student.last_activity.lesson_title', 'Aula de Frações')
+            ->where('student.last_activity.xp_earned', 35)
+            ->has('student.last_activity.finished_at')
+        );
+});
+
+it('student dashboard receives equipped theme customization', function () {
+    $user = User::factory()->create(['role' => 'student']);
+    $student = Student::factory()->create(['user_id' => $user->id]);
+    $themeItem = ShopItem::factory()->create([
+        'type' => ShopItem::TYPE_THEME,
+        'slug' => 'tema-oceano-teste',
+        'metadata' => ['primary' => '#0F172A', 'accent' => '#38BDF8'],
+    ]);
+    StudentItem::factory()->equipped()->create([
+        'student_id' => $student->id,
+        'item_id' => $themeItem->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/dashboard')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('gameplay_customization.theme.slug', 'tema-oceano-teste')
+            ->where('gameplay_customization.theme.css_vars.--color-game-accent', '#38BDF8')
+            ->where('gameplay_customization.theme.css_vars.--color-game-deep', '#0F172A')
+        );
+});
+
+it('student dashboard receives equipped frame customization', function () {
+    $user = User::factory()->create(['role' => 'student']);
+    $student = Student::factory()->create(['user_id' => $user->id]);
+    $frameItem = ShopItem::factory()->create([
+        'type' => ShopItem::TYPE_FRAME,
+        'slug' => 'borda-dourada-teste',
+        'metadata' => ['color' => '#FFD700', 'style' => 'solid'],
+    ]);
+    StudentItem::factory()->equipped()->create([
+        'student_id' => $student->id,
+        'item_id' => $frameItem->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/dashboard')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('gameplay_customization.frame.slug', 'borda-dourada-teste')
+            ->where('gameplay_customization.frame.style.borderColor', '#FFD700')
+            ->where('gameplay_customization.frame.style.borderStyle', 'solid')
         );
 });
 

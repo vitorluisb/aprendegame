@@ -27,12 +27,7 @@ class ModerationService
         'invasao',
     ];
 
-    /** Daily message limits per age group */
-    private const DAILY_LIMITS = [
-        'child' => 20,   // up to 12 years
-        'teen' => 40,    // 13–17 years
-        'adult' => 100,  // 18+
-    ];
+    private const DAILY_LIMIT = 15;
 
     public function isBlocked(string $message): bool
     {
@@ -75,13 +70,7 @@ class ModerationService
 
     public function dailyLimitFor(Student $student): int
     {
-        $age = $student->birth_date?->age ?? 18;
-
-        return match (true) {
-            $age <= 12 => self::DAILY_LIMITS['child'],
-            $age <= 17 => self::DAILY_LIMITS['teen'],
-            default => self::DAILY_LIMITS['adult'],
-        };
+        return self::DAILY_LIMIT;
     }
 
     public function remainingMessages(Student $student): int

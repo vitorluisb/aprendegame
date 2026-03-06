@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ShopItems\Schemas;
 
+use App\Domain\Gameplay\Models\ShopItem;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -28,10 +29,10 @@ class ShopItemForm
                         Select::make('type')
                             ->label('Tipo')
                             ->options([
-                                'avatar' => 'Avatar',
-                                'frame' => 'Moldura',
-                                'theme' => 'Tema',
-                                'power_up' => 'Power-up',
+                                ShopItem::TYPE_AVATAR => 'Avatar',
+                                ShopItem::TYPE_FRAME => 'Moldura',
+                                ShopItem::TYPE_THEME => 'Tema',
+                                ShopItem::TYPE_POWER_UP => 'Power-up',
                             ])
                             ->required(),
 

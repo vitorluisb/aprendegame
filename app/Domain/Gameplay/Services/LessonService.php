@@ -7,14 +7,18 @@ use App\Domain\Gameplay\Models\Attempt;
 use App\Domain\Gameplay\Models\Lesson;
 use App\Domain\Gameplay\Models\LessonRun;
 use App\Domain\Gameplay\Models\Question;
-use App\Jobs\AwardXP;
-use App\Jobs\UpdateMastery;
+use App\Domain\Gameplay\Models\XpTransaction;
 use App\Jobs\UpdateQuestionMetrics;
-use App\Jobs\UpdateStreak;
 use Carbon\Carbon;
+use RuntimeException;
 
 class LessonService
 {
+    public function __construct(
+        private readonly MasteryService $masteryService,
+        private readonly StreakService $streakService,
+    ) {}
+
     public function start(Student $student, Lesson $lesson): LessonRun
     {
         return LessonRun::create([
@@ -26,6 +30,18 @@ class LessonService
 
     public function answer(LessonRun $run, Question $question, string $answer, int $timeMs): Attempt
     {
+        $student = Student::withoutGlobalScopes()->find($run->student_id);
+        if (! $student) {
+            throw new RuntimeException('Aluno não encontrado para esta sessão.');
+        }
+
+        $student->refillLivesIfDue();
+        $student = $student->fresh();
+
+        if (! $student->hasLives()) {
+            throw new RuntimeException('Você está sem vidas. Compre vidas na loja para continuar.');
+        }
+
         $correct = $this->checkAnswer($question, $answer);
 
         $attempt = Attempt::create([
@@ -36,6 +52,10 @@ class LessonService
             'time_ms' => $timeMs,
             'given_answer' => $answer,
         ]);
+
+        if (! $correct) {
+            $student->loseLife();
+        }
 
         UpdateQuestionMetrics::dispatch($question->id);
 
@@ -58,11 +78,25 @@ class LessonService
             'xp_earned' => $xp,
         ]);
 
+        XpTransaction::create([
+            'student_id' => $run->student_id,
+            'amount' => $xp,
+            'reason' => 'lesson',
+            'reference_type' => 'LessonRun',
+            'reference_id' => $run->id,
+            'created_at' => now(),
+        ]);
+
+        $student = Student::withoutGlobalScopes()->find($run->student_id);
         $skillIds = $run->lesson?->node?->skill_ids ?? [];
 
-        AwardXP::dispatch($run->student_id, $xp, 'lesson', $run->id);
-        UpdateMastery::dispatch($run->student_id, $skillIds);
-        UpdateStreak::dispatch($run->student_id);
+        if ($student) {
+            foreach ($skillIds as $skillId) {
+                $this->masteryService->update($student, (int) $skillId, correct: true);
+            }
+
+            $this->streakService->update($student);
+        }
 
         return $run->refresh();
     }

@@ -17,7 +17,7 @@ class ShopItemFactory extends Factory
 
         return [
             'name' => $name,
-            'type' => fake()->randomElement(['avatar', 'frame', 'theme', 'power_up']),
+            'type' => fake()->randomElement(ShopItem::TYPES),
             'slug' => Str::slug($name).'-'.fake()->unique()->numberBetween(1, 9999),
             'description' => fake()->sentence(),
             'image_url' => null,
@@ -34,7 +34,7 @@ class ShopItemFactory extends Factory
 
     public function avatar(): static
     {
-        return $this->state(['type' => 'avatar']);
+        return $this->state(['type' => ShopItem::TYPE_AVATAR]);
     }
 
     public function cheap(): static

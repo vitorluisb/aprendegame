@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Domain\Content\Models\Grade;
+use App\Domain\Gameplay\Models\ShopItem;
 use App\Domain\Gameplay\Models\StudentBadge;
 use App\Domain\Gameplay\Models\StudentItem;
 use App\Http\Controllers\Controller;
@@ -11,9 +12,9 @@ use App\Http\Requests\UpdateStudentGradeRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class StudentProfileController extends Controller
 {
@@ -64,7 +65,9 @@ class StudentProfileController extends Controller
             ->get();
 
         $equippedAvatarUrl = $inventoryCollection
-            ->first(fn (StudentItem $studentItem): bool => $studentItem->equipped && $studentItem->item?->type === 'avatar' && filled($studentItem->item?->image_url))
+            ->first(fn (StudentItem $studentItem): bool => $studentItem->equipped
+                && in_array(ShopItem::normalizeType((string) $studentItem->item?->type), ShopItem::rawTypeCandidates(ShopItem::TYPE_AVATAR), true)
+                && filled($studentItem->item?->image_url))
             ?->item?->image_url;
 
         $personalAvatarUrl = $this->normalizeStudentAvatarUrl($student->avatar_url);

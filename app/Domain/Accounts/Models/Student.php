@@ -4,13 +4,14 @@ namespace App\Domain\Accounts\Models;
 
 use App\Domain\Accounts\Scopes\SchoolScope;
 use App\Domain\Content\Models\Grade;
-use Database\Factories\Domain\Accounts\Models\StudentFactory;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use App\Domain\Gameplay\Models\GemTransaction;
 use App\Domain\Gameplay\Models\Streak;
 use App\Domain\Gameplay\Models\StudentItem;
 use App\Domain\Gameplay\Models\XpTransaction;
+use Carbon\Carbon;
+use Database\Factories\Domain\Accounts\Models\StudentFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,7 +22,12 @@ class Student extends Model
 {
     /** @use HasFactory<StudentFactory> */
     use HasFactory;
+
     use SoftDeletes;
+
+    public const DEFAULT_LIVES = 5;
+
+    public const LIFE_PURCHASE_COST = 40;
 
     protected $fillable = [
         'user_id',
@@ -30,18 +36,24 @@ class Student extends Model
         'name',
         'birth_date',
         'avatar_url',
+        'lives_current',
+        'lives_max',
+        'lives_refilled_at',
     ];
 
     protected function casts(): array
     {
         return [
             'birth_date' => 'date',
+            'lives_current' => 'integer',
+            'lives_max' => 'integer',
+            'lives_refilled_at' => 'datetime',
         ];
     }
 
     protected static function booted(): void
     {
-        static::addGlobalScope(new SchoolScope());
+        static::addGlobalScope(new SchoolScope);
     }
 
     public function user(): BelongsTo
@@ -94,5 +106,71 @@ class Student extends Model
     public function inventory(): HasMany
     {
         return $this->hasMany(StudentItem::class);
+    }
+
+    public function loseLife(int $amount = 1): void
+    {
+        if ($amount <= 0) {
+            return;
+        }
+
+        $freshLives = max(0, ((int) $this->lives_current) - $amount);
+        $this->update([
+            'lives_current' => $freshLives,
+            'lives_refilled_at' => now(),
+        ]);
+    }
+
+    public function recoverLife(int $amount = 1): void
+    {
+        if ($amount <= 0) {
+            return;
+        }
+
+        $newLives = min((int) $this->lives_max, ((int) $this->lives_current) + $amount);
+        $this->update([
+            'lives_current' => $newLives,
+            'lives_refilled_at' => now(),
+        ]);
+    }
+
+    public function hasLives(): bool
+    {
+        return (int) $this->lives_current > 0;
+    }
+
+    public function isAtMaxLives(): bool
+    {
+        return (int) $this->lives_current >= (int) $this->lives_max;
+    }
+
+    public function refillLivesIfDue(): void
+    {
+        if ($this->isAtMaxLives()) {
+            return;
+        }
+
+        $currentLives = (int) $this->lives_current;
+        $maxLives = (int) $this->lives_max;
+
+        if ($maxLives <= $currentLives) {
+            return;
+        }
+
+        $now = now();
+        $reference = $this->lives_refilled_at ?? $this->updated_at ?? $this->created_at ?? $now;
+        $elapsedHours = $reference->diffInHours($now);
+
+        if ($elapsedHours < 1) {
+            return;
+        }
+
+        $recoverAmount = min($maxLives - $currentLives, $elapsedHours);
+        $newLives = $currentLives + $recoverAmount;
+
+        $this->update([
+            'lives_current' => $newLives,
+            'lives_refilled_at' => Carbon::parse($reference)->addHours($recoverAmount),
+        ]);
     }
 }

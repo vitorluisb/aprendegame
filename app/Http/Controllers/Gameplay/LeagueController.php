@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Gameplay;
 
 use App\Domain\Accounts\Enums\UserRole;
 use App\Domain\Accounts\Models\Student;
+use App\Domain\Gameplay\Models\ShopItem;
 use App\Domain\Gameplay\Models\StudentItem;
 use App\Domain\Gameplay\Services\LeagueService;
 use App\Http\Controllers\Controller;
@@ -39,7 +40,7 @@ class LeagueController extends Controller
         $equippedAvatarByStudentId = StudentItem::query()
             ->whereIn('student_id', $studentIds)
             ->where('equipped', true)
-            ->whereHas('item', fn ($query) => $query->where('type', 'avatar')->whereNotNull('image_url'))
+            ->whereHas('item', fn ($query) => $query->whereIn('type', ShopItem::rawTypeCandidates(ShopItem::TYPE_AVATAR))->whereNotNull('image_url'))
             ->with('item:id,image_url')
             ->get()
             ->keyBy('student_id');

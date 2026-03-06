@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Gameplay\StudentNeuronsSeeder;
+use Database\Seeders\Gameplay\TrailContentSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -17,6 +19,8 @@ class DatabaseSeeder extends Seeder
             SchoolMemberSeeder::class,
             StudentSeeder::class,
             StudentGuardianSeeder::class,
+            TrailContentSeeder::class,
+            StudentNeuronsSeeder::class,
         ]);
     }
 }

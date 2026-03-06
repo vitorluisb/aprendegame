@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Accounts\Models\Student;
 use App\Domain\Gameplay\Models\Lesson;
 use App\Domain\Gameplay\Models\LessonRun;
 use App\Domain\Gameplay\Models\Question;
@@ -11,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 
 class LessonController extends Controller
 {
@@ -21,6 +23,8 @@ class LessonController extends Controller
         /** @var User $user */
         $user = auth()->user();
         $student = $user->ensureStudentProfile();
+        $student->refillLivesIfDue();
+        $student = $student->fresh();
 
         // Resume existing incomplete run, or start a new one
         $run = LessonRun::where('student_id', $student->id)
@@ -53,6 +57,8 @@ class LessonController extends Controller
                 'path_title' => $lesson->node?->path?->title,
             ],
             'run_id' => $run->id,
+            'lives_current' => $student->lives_current,
+            'lives_max' => $student->lives_max,
             'questions' => $questions,
         ]);
     }
@@ -67,12 +73,26 @@ class LessonController extends Controller
 
         $question = Question::findOrFail($data['question_id']);
 
-        $attempt = $this->lessonService->answer($lessonRun, $question, $data['answer'], $data['time_ms']);
+        try {
+            $attempt = $this->lessonService->answer($lessonRun, $question, $data['answer'], $data['time_ms']);
+        } catch (RuntimeException $exception) {
+            $student = Student::withoutGlobalScopes()->find($lessonRun->student_id);
+
+            return response()->json([
+                'message' => $exception->getMessage(),
+                'remaining_lives' => $student?->lives_current ?? 0,
+                'lives_max' => $student?->lives_max ?? 0,
+            ], 422);
+        }
+
+        $student = Student::withoutGlobalScopes()->find($lessonRun->student_id);
 
         return response()->json([
             'correct' => $attempt->correct,
             'explanation' => $question->explanation,
             'correct_answer' => $question->correct_answer,
+            'remaining_lives' => $student?->lives_current ?? 0,
+            'lives_max' => $student?->lives_max ?? 0,
         ]);
     }
 

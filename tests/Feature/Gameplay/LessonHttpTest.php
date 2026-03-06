@@ -1,7 +1,6 @@
 <?php
 
 use App\Domain\Accounts\Models\Student;
-use App\Domain\Content\Models\PathNode;
 use App\Domain\Gameplay\Models\Lesson;
 use App\Domain\Gameplay\Models\LessonRun;
 use App\Domain\Gameplay\Models\Question;
@@ -26,6 +25,8 @@ it('student can access lesson play page', function () {
             ->component('Lessons/Play')
             ->has('lesson.id')
             ->has('run_id')
+            ->where('lives_current', 5)
+            ->where('lives_max', 5)
             ->has('questions')
         );
 });
@@ -82,7 +83,7 @@ it('student can submit an answer', function () {
             'time_ms' => 3000,
         ])
         ->assertSuccessful()
-        ->assertJsonStructure(['correct', 'explanation', 'correct_answer']);
+        ->assertJsonStructure(['correct', 'explanation', 'correct_answer', 'remaining_lives', 'lives_max']);
 });
 
 it('correct answer returns correct true', function () {
@@ -104,7 +105,7 @@ it('correct answer returns correct true', function () {
             'answer' => 'A',
             'time_ms' => 2000,
         ])
-        ->assertJson(['correct' => true]);
+        ->assertJson(['correct' => true, 'remaining_lives' => 5, 'lives_max' => 5]);
 });
 
 it('wrong answer returns correct false', function () {
@@ -126,7 +127,7 @@ it('wrong answer returns correct false', function () {
             'answer' => 'B',
             'time_ms' => 2000,
         ])
-        ->assertJson(['correct' => false]);
+        ->assertJson(['correct' => false, 'remaining_lives' => 4, 'lives_max' => 5]);
 });
 
 it('student can finish a lesson run', function () {
@@ -178,4 +179,28 @@ it('answer endpoint validates required fields', function () {
     $this->actingAs($user)
         ->postJson("/runs/{$run->id}/responder", [])
         ->assertUnprocessable();
+});
+
+it('answer endpoint blocks student without lives', function () {
+    $user = User::factory()->create(['role' => 'student']);
+    $student = Student::factory()->create(['user_id' => $user->id, 'lives_current' => 0, 'lives_max' => 5]);
+    $lesson = Lesson::factory()->published()->create();
+    $question = Question::factory()->multipleChoice()->create(['correct_answer' => 'A']);
+    $lesson->questions()->attach($question->id, ['order' => 1]);
+
+    $run = LessonRun::factory()->create([
+        'student_id' => $student->id,
+        'lesson_id' => $lesson->id,
+        'finished_at' => null,
+    ]);
+
+    $this->actingAs($user)
+        ->postJson("/runs/{$run->id}/responder", [
+            'question_id' => $question->id,
+            'answer' => 'A',
+            'time_ms' => 3000,
+        ])
+        ->assertStatus(422)
+        ->assertJsonStructure(['message', 'remaining_lives', 'lives_max'])
+        ->assertJson(['remaining_lives' => 0, 'lives_max' => 5]);
 });

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Domain\Content\Models\Path;
+use App\Domain\Gameplay\Models\LessonRun;
+use App\Domain\Gameplay\Models\ShopItem;
 use App\Domain\Gameplay\Models\StudentItem;
 use App\Domain\Gameplay\Services\MasteryService;
 use App\Http\Controllers\Controller;
@@ -41,11 +43,13 @@ class DashboardController extends Controller
 
     private function studentDashboard(User $user): Response
     {
-        $student = $user->ensureStudentProfile()->load('streak');
+        $student = $user->ensureStudentProfile();
+        $student->refillLivesIfDue();
+        $student = $student->fresh()->load('streak');
         $equippedAvatarUrl = StudentItem::query()
             ->where('student_id', $student->id)
             ->where('equipped', true)
-            ->whereHas('item', fn ($query) => $query->where('type', 'avatar')->whereNotNull('image_url'))
+            ->whereHas('item', fn ($query) => $query->whereIn('type', ShopItem::rawTypeCandidates(ShopItem::TYPE_AVATAR))->whereNotNull('image_url'))
             ->with('item:id,image_url')
             ->latest('updated_at')
             ->first()
@@ -57,6 +61,16 @@ class DashboardController extends Controller
         $xpInLevel = $totalXp % 100;
 
         $dueReviews = $this->masteryService->getDueReviews($student, 5);
+        $lastLessonRun = LessonRun::query()
+            ->where('student_id', $student->id)
+            ->whereNotNull('finished_at')
+            ->with([
+                'lesson:id,node_id,title',
+                'lesson.node:id,path_id',
+                'lesson.node.path:id,title',
+            ])
+            ->latest('finished_at')
+            ->first();
 
         $recommendedPathsQuery = Path::query()
             ->where('published', true)
@@ -96,12 +110,20 @@ class DashboardController extends Controller
                 'xp_in_level' => $xpInLevel,
                 'streak_current' => $student->streak?->current ?? 0,
                 'streak_best' => $student->streak?->best ?? 0,
+                'lives_current' => $student->lives_current,
+                'lives_max' => $student->lives_max,
                 'due_reviews_count' => $dueReviews->count(),
                 'due_reviews' => $dueReviews->map(fn ($m) => [
                     'skill_code' => $m->skill?->code,
                     'skill_description' => $m->skill?->description,
                     'mastery_score' => $m->mastery_score,
                 ]),
+                'last_activity' => $lastLessonRun ? [
+                    'path_title' => $lastLessonRun->lesson?->node?->path?->title,
+                    'lesson_title' => $lastLessonRun->lesson?->title,
+                    'xp_earned' => $lastLessonRun->xp_earned,
+                    'finished_at' => $lastLessonRun->finished_at?->toIso8601String(),
+                ] : null,
                 'recommended_paths' => $recommendedPaths,
             ],
         ]);
