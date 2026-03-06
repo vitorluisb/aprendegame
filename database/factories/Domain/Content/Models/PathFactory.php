@@ -35,14 +35,4 @@ class PathFactory extends Factory
     {
         return $this->state(['path_type' => 'enem']);
     }
-
-    public function vestibularFuvest(): static
-    {
-        return $this->state(['path_type' => 'vestibular_fuvest']);
-    }
-
-    public function vestibularUnicamp(): static
-    {
-        return $this->state(['path_type' => 'vestibular_unicamp']);
-    }
 }

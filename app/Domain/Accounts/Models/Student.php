@@ -25,7 +25,7 @@ class Student extends Model
 
     use SoftDeletes;
 
-    public const DEFAULT_LIVES = 5;
+    public const DEFAULT_LIVES = 10;
 
     public const LIFE_PURCHASE_COST = 40;
 

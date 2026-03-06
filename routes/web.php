@@ -8,9 +8,14 @@ use App\Http\Controllers\Dashboard\StudentProfileController;
 use App\Http\Controllers\Dashboard\TeacherDashboardController;
 use App\Http\Controllers\Gameplay\LeagueController;
 use App\Http\Controllers\Gameplay\ShopController;
+use App\Http\Controllers\Guardian\GuardianController;
+use App\Http\Controllers\Guardian\GuardianStudentController;
+use App\Http\Controllers\Guardian\GuardianStudentCreateController;
+use App\Http\Controllers\Guardian\GuardianTutorController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\PathController;
 use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\SelectRoleController;
 use App\Http\Controllers\SocialAuthController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
@@ -25,13 +30,17 @@ Route::middleware('guest')->group(function (): void {
     Route::get('/auth/google/callback', [SocialAuthController::class, 'callback'])->name('oauth.google.callback');
 });
 
+Route::get('/selecionar-perfil', [SelectRoleController::class, 'create'])->name('select-role');
+Route::post('/selecionar-perfil', [SelectRoleController::class, 'store'])->name('select-role.store');
+
 Route::middleware('auth')->group(function (): void {
     Route::get('/email/verify', fn () => Inertia::render('Auth/VerifyEmail'))->name('verification.notice');
 
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request): RedirectResponse {
         $request->fulfill();
+        $role = $request->user()?->role;
 
-        return redirect('/dashboard');
+        return redirect($role === 'guardian' ? '/responsavel' : '/dashboard');
     })->middleware(['signed', 'throttle:email-verification'])->name('verification.verify');
 
     Route::post('/email/verification-notification', function (Request $request): RedirectResponse {
@@ -54,6 +63,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/perfil', [StudentProfileController::class, 'show'])->name('profile.show');
     Route::post('/perfil/serie', [StudentProfileController::class, 'updateGrade'])->name('profile.update-grade');
     Route::post('/perfil/avatar', [StudentProfileController::class, 'updateAvatar'])->name('profile.update-avatar');
+    Route::post('/perfil/avatar/pessoal', [StudentProfileController::class, 'usePersonalAvatar'])->name('profile.use-personal-avatar');
     Route::get('/media/student-avatars/{filename}', [StudentProfileController::class, 'avatar'])
         ->where('filename', '[A-Za-z0-9._-]+')
         ->name('profile.avatar');
@@ -87,4 +97,13 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/aulas/{lesson}/jogar', [LessonController::class, 'play'])->name('lessons.play');
     Route::post('/runs/{lessonRun}/responder', [LessonController::class, 'answer'])->name('lessons.answer');
     Route::post('/runs/{lessonRun}/finalizar', [LessonController::class, 'finish'])->name('lessons.finish');
+});
+
+// Painel dos Responsáveis (Pais/Guardiões)
+Route::middleware(['auth', 'verified', 'role:guardian'])->prefix('responsavel')->name('guardian.')->group(function (): void {
+    Route::get('/', [GuardianController::class, 'index'])->name('dashboard');
+    Route::get('/adicionar-filho', [GuardianStudentCreateController::class, 'create'])->name('student.create');
+    Route::post('/adicionar-filho', [GuardianStudentCreateController::class, 'store'])->name('student.store');
+    Route::get('/{student}', [GuardianStudentController::class, 'show'])->name('student.show');
+    Route::get('/{student}/conversas', [GuardianTutorController::class, 'index'])->name('student.tutor');
 });

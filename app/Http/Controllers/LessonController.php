@@ -65,13 +65,31 @@ class LessonController extends Controller
 
     public function answer(Request $request, LessonRun $lessonRun): JsonResponse
     {
+        /** @var User $user */
+        $user = auth()->user();
+        $student = $user->ensureStudentProfile();
+
+        if ((int) $lessonRun->student_id !== (int) $student->id) {
+            return response()->json(['message' => 'Acesso negado a esta sessão.'], 403);
+        }
+
         $data = $request->validate([
             'question_id' => ['required', 'integer', 'exists:questions,id'],
             'answer' => ['required', 'string'],
             'time_ms' => ['required', 'integer', 'min:0'],
         ]);
 
-        $question = Question::findOrFail($data['question_id']);
+        $question = $lessonRun->lesson?->questions()
+            ->where('questions.id', $data['question_id'])
+            ->first();
+
+        if (! $question instanceof Question) {
+            return response()->json([
+                'message' => 'Questão não pertence a esta aula.',
+                'remaining_lives' => $student->lives_current,
+                'lives_max' => $student->lives_max,
+            ], 422);
+        }
 
         try {
             $attempt = $this->lessonService->answer($lessonRun, $question, $data['answer'], $data['time_ms']);
@@ -98,11 +116,20 @@ class LessonController extends Controller
 
     public function finish(LessonRun $lessonRun): JsonResponse
     {
+        /** @var User $user */
+        $user = auth()->user();
+        $student = $user->ensureStudentProfile();
+
+        if ((int) $lessonRun->student_id !== (int) $student->id) {
+            return response()->json(['message' => 'Acesso negado a esta sessão.'], 403);
+        }
+
         $run = $this->lessonService->finish($lessonRun);
 
         return response()->json([
             'score' => $run->score,
             'xp_earned' => $run->xp_earned,
+            'neurons_earned' => (int) ($run->neurons_earned ?? 0),
             'correct_count' => $run->correct_count,
             'total_count' => $run->total_count,
         ]);

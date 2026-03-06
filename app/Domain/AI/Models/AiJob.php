@@ -16,6 +16,7 @@ class AiJob extends Model
     protected $table = 'ai_jobs';
 
     protected $fillable = [
+        'batch_uuid',
         'type',
         'skill_id',
         'status',
@@ -23,6 +24,7 @@ class AiJob extends Model
         'prompt_tokens',
         'result_tokens',
         'model',
+        'requested_count',
         'error',
         'questions_generated',
         'started_at',
@@ -35,6 +37,7 @@ class AiJob extends Model
             'config' => 'array',
             'prompt_tokens' => 'integer',
             'result_tokens' => 'integer',
+            'requested_count' => 'integer',
             'questions_generated' => 'integer',
             'started_at' => 'datetime',
             'finished_at' => 'datetime',

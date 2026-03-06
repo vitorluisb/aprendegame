@@ -31,16 +31,23 @@ class CreateNewUser implements CreatesNewUsers
                 Rule::unique(User::class),
             ],
             'password' => $this->passwordRules(),
+            'role' => ['nullable', Rule::in([UserRole::Student->value, UserRole::Guardian->value])],
         ])->validate();
+
+        $role = isset($input['role']) && $input['role'] === UserRole::Guardian->value
+            ? UserRole::Guardian->value
+            : UserRole::Student->value;
 
         $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
-            'role' => UserRole::Student->value,
+            'role' => $role,
         ]);
 
-        $user->ensureStudentProfile();
+        if ($role === UserRole::Student->value) {
+            $user->ensureStudentProfile();
+        }
 
         return $user;
     }

@@ -155,6 +155,18 @@ class StudentProfileController extends Controller
 
         $student->update(['avatar_url' => $publicUrl]);
         $user->update(['avatar_url' => $publicUrl]);
+        $this->unequipShopAvatars($student->id);
+
+        return back();
+    }
+
+    public function usePersonalAvatar(): RedirectResponse
+    {
+        /** @var User $user */
+        $user = auth()->user();
+        $student = $user->ensureStudentProfile();
+
+        $this->unequipShopAvatars($student->id);
 
         return back();
     }
@@ -203,5 +215,14 @@ class StudentProfileController extends Controller
         }
 
         return null;
+    }
+
+    private function unequipShopAvatars(int $studentId): void
+    {
+        StudentItem::query()
+            ->where('student_id', $studentId)
+            ->where('equipped', true)
+            ->whereHas('item', fn ($query) => $query->whereIn('type', ShopItem::rawTypeCandidates(ShopItem::TYPE_AVATAR)))
+            ->update(['equipped' => false]);
     }
 }

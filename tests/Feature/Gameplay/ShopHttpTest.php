@@ -36,8 +36,8 @@ it('student can view shop page with items and gems', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('Shop/Index')
             ->where('gems_balance', 180)
-            ->where('lives_current', 5)
-            ->where('lives_max', 5)
+            ->where('lives_current', 10)
+            ->where('lives_max', 10)
             ->has('items', 1)
             ->where('items.0.name', 'Avatar Azul')
             ->where('items.0.is_owned', false)
@@ -71,8 +71,8 @@ it('user with student profile can view shop page even with non-student role', fu
         ->assertInertia(fn (Assert $page) => $page
             ->component('Shop/Index')
             ->where('gems_balance', 180)
-            ->where('lives_current', 5)
-            ->where('lives_max', 5)
+            ->where('lives_current', 10)
+            ->where('lives_max', 10)
             ->has('items', 1)
             ->where('items.0.name', 'Avatar Azul')
             ->where('items.0.is_owned', false)
@@ -179,6 +179,25 @@ it('non-student is redirected from shop page', function () {
         ->assertRedirect('/dashboard');
 });
 
+it('non-student cannot execute shop actions via post endpoints', function () {
+    $guardian = User::factory()->create(['role' => 'guardian', 'school_id' => null]);
+    $item = ShopItem::factory()->create(['gem_price' => 10, 'active' => true]);
+
+    $this->actingAs($guardian)
+        ->post('/loja/comprar', ['item_id' => $item->id])
+        ->assertForbidden();
+
+    $this->actingAs($guardian)
+        ->post('/loja/equipar', ['item_id' => $item->id])
+        ->assertForbidden();
+
+    $this->actingAs($guardian)
+        ->post('/loja/vidas/comprar')
+        ->assertRedirect('/dashboard');
+
+    expect($guardian->studentProfile()->withoutGlobalScopes()->exists())->toBeFalse();
+});
+
 it('student without profile can still access shop page', function () {
     $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
 
@@ -188,8 +207,8 @@ it('student without profile can still access shop page', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('Shop/Index')
             ->where('gems_balance', 0)
-            ->where('lives_current', 5)
-            ->where('lives_max', 5)
+            ->where('lives_current', 10)
+            ->where('lives_max', 10)
         );
 });
 
@@ -199,7 +218,7 @@ it('student can buy one life in shop', function () {
         'user_id' => $user->id,
         'school_id' => null,
         'lives_current' => 3,
-        'lives_max' => 5,
+        'lives_max' => 10,
     ]);
 
     GemTransaction::factory()->create([
@@ -220,8 +239,8 @@ it('buy life fails when student is at max lives', function () {
     $student = Student::factory()->create([
         'user_id' => $user->id,
         'school_id' => null,
-        'lives_current' => 5,
-        'lives_max' => 5,
+        'lives_current' => 10,
+        'lives_max' => 10,
     ]);
 
     GemTransaction::factory()->create([
@@ -235,6 +254,6 @@ it('buy life fails when student is at max lives', function () {
         ->assertRedirect('/loja')
         ->assertSessionHasErrors('shop');
 
-    expect($student->fresh()->lives_current)->toBe(5);
+    expect($student->fresh()->lives_current)->toBe(10);
     expect($student->fresh()->totalGems())->toBe(200);
 });

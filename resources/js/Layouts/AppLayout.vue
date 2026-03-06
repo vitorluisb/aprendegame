@@ -8,6 +8,7 @@ defineProps({ title: { type: String, default: '' } });
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
+const isGuardian = computed(() => user.value?.role === 'guardian');
 const gameplayCustomization = computed(() => page.props.gameplay_customization ?? null);
 const currentUrl = computed(() => page.url ?? '');
 const { isEnabled, pop, toggle } = useUiSfx();
@@ -41,6 +42,7 @@ function onNavTap() {
                 <div class="flex items-center gap-1.5 text-sm text-[var(--color-game-deep)]/80 md:gap-3">
                     <span v-if="user" class="max-w-20 truncate text-xs font-medium sm:max-w-28 sm:text-sm">{{ user.name?.split(' ')?.[0] ?? user.name }}</span>
                     <button
+                        v-if="!isGuardian"
                         type="button"
                         class="rounded-full border border-[color:var(--color-game-accent)]/25 bg-white px-2 py-1 text-[10px] font-semibold text-[var(--color-game-deep)] transition hover:bg-[var(--color-game-bg)] md:px-2.5 md:text-[11px]"
                         @click="toggle"
@@ -57,8 +59,38 @@ function onNavTap() {
             <slot />
         </main>
 
-        <!-- Navegação inferior -->
-        <nav class="fixed bottom-0 left-0 right-0 z-10 border-t border-[color:var(--color-game-accent)]/20 bg-white/85 backdrop-blur-xl">
+        <!-- Navegação inferior — Responsável -->
+        <nav v-if="isGuardian" class="fixed bottom-0 left-0 right-0 z-10 border-t border-violet-200/60 bg-white/90 backdrop-blur-xl">
+            <div class="mx-auto flex max-w-lg justify-around py-2">
+                <Link
+                    href="/responsavel"
+                    class="flex flex-col items-center gap-0.5 px-8 py-1 text-xs transition-colors"
+                    :class="isActive('/responsavel') ? 'text-violet-600 font-semibold' : 'text-slate-400'"
+                    @click="onNavTap"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Painel
+                </Link>
+
+                <Link
+                    href="/logout"
+                    method="post"
+                    as="button"
+                    class="flex flex-col items-center gap-0.5 px-8 py-1 text-xs text-slate-400 transition-colors hover:text-rose-500"
+                    @click="onNavTap"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Sair
+                </Link>
+            </div>
+        </nav>
+
+        <!-- Navegação inferior — Aluno/Professor -->
+        <nav v-else class="fixed bottom-0 left-0 right-0 z-10 border-t border-[color:var(--color-game-accent)]/20 bg-white/85 backdrop-blur-xl">
             <div class="mx-auto flex max-w-lg justify-around py-2">
                 <Link
                     href="/dashboard"

@@ -113,7 +113,7 @@ it('student dashboard refills one life per hour elapsed', function () {
     $student = Student::factory()->create([
         'user_id' => $user->id,
         'lives_current' => 2,
-        'lives_max' => 5,
+        'lives_max' => 10,
         'lives_refilled_at' => now()->subHours(2),
     ]);
 
@@ -122,7 +122,7 @@ it('student dashboard refills one life per hour elapsed', function () {
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->where('student.lives_current', 4)
-            ->where('student.lives_max', 5)
+            ->where('student.lives_max', 10)
         );
 
     expect($student->fresh()->lives_current)->toBe(4);
@@ -397,6 +397,71 @@ it('student can upload personal avatar from profile', function () {
     expect($avatarUrl)->not->toBeNull();
     expect(str_starts_with((string) $avatarUrl, '/media/student-avatars/'))->toBeTrue();
     Storage::disk('public')->assertExists(str_replace('/media/', '', (string) $avatarUrl));
+});
+
+it('uploading personal avatar unequips equipped shop avatar', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create([
+        'role' => 'student',
+        'school_id' => null,
+    ]);
+    $student = Student::factory()->create([
+        'user_id' => $user->id,
+        'school_id' => null,
+    ]);
+
+    $shopAvatar = ShopItem::factory()->avatar()->create([
+        'image_url' => '/storage/shop-avatars/shop-avatar.png',
+    ]);
+    $studentItem = StudentItem::factory()->equipped()->create([
+        'student_id' => $student->id,
+        'item_id' => $shopAvatar->id,
+    ]);
+
+    $this->actingAs($user)
+        ->post('/perfil/avatar', [
+            'avatar' => UploadedFile::fake()->image('profile.png'),
+        ])
+        ->assertRedirect();
+
+    expect($studentItem->fresh()->equipped)->toBeFalse();
+    expect(str_starts_with((string) $student->fresh()->avatar_url, '/media/student-avatars/'))->toBeTrue();
+});
+
+it('student can switch back to personal avatar without uploading again', function () {
+    $user = User::factory()->create([
+        'role' => 'student',
+        'school_id' => null,
+    ]);
+    $student = Student::factory()->create([
+        'user_id' => $user->id,
+        'school_id' => null,
+        'avatar_url' => '/media/student-avatars/pessoal.png',
+    ]);
+
+    $shopAvatar = ShopItem::factory()->avatar()->create([
+        'image_url' => '/storage/shop-avatars/shop-avatar.png',
+    ]);
+    $studentItem = StudentItem::factory()->equipped()->create([
+        'student_id' => $student->id,
+        'item_id' => $shopAvatar->id,
+    ]);
+
+    $this->actingAs($user)
+        ->post('/perfil/avatar/pessoal')
+        ->assertRedirect();
+
+    expect($studentItem->fresh()->equipped)->toBeFalse();
+
+    $this->actingAs($user)
+        ->get('/perfil')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('student.avatar_url', '/media/student-avatars/pessoal.png')
+            ->where('student.avatar_personal_url', '/media/student-avatars/pessoal.png')
+            ->where('student.avatar_equipped_url', null)
+        );
 });
 
 it('serves uploaded student avatar through media route', function () {

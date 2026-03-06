@@ -36,14 +36,11 @@ class PathsTable
                     ->color(fn (string $state): string => match ($state) {
                         'regular' => 'info',
                         'enem' => 'warning',
-                        'vestibular_fuvest', 'vestibular_unicamp' => 'success',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'regular' => 'Regular',
                         'enem' => 'ENEM',
-                        'vestibular_fuvest' => 'FUVEST',
-                        'vestibular_unicamp' => 'UNICAMP',
                         default => $state,
                     }),
 
@@ -61,8 +58,6 @@ class PathsTable
                     ->options([
                         'regular' => 'Ensino Regular',
                         'enem' => 'ENEM',
-                        'vestibular_fuvest' => 'FUVEST',
-                        'vestibular_unicamp' => 'UNICAMP',
                     ]),
 
                 SelectFilter::make('grade')

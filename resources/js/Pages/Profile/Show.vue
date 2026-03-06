@@ -17,6 +17,7 @@ const gradeForm = useForm({
 const avatarForm = useForm({
     avatar: null,
 });
+const avatarModeForm = useForm({});
 const { isEnabled, volume, pack, prefersReducedMotion, pop, success, error, combo, purchase, victory, setVolume, setPack, toggle } = useUiSfx();
 const selectedPack = ref(pack.value);
 const packOptions = [
@@ -95,6 +96,14 @@ function onAvatarSelected(event) {
         },
     });
 }
+
+function usePersonalAvatar() {
+    avatarModeForm.post('/perfil/avatar/pessoal', {
+        preserveScroll: true,
+        onSuccess: () => success(),
+        onError: () => error(),
+    });
+}
 </script>
 
 <template>
@@ -156,6 +165,15 @@ function onAvatarSelected(event) {
                     <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/heic,image/heif" class="hidden" :disabled="avatarForm.processing" @change="onAvatarSelected">
                     {{ avatarForm.processing ? 'Enviando foto...' : 'Enviar foto pessoal' }}
                 </label>
+                <button
+                    v-if="student.avatar_personal_url && student.avatar_equipped_url"
+                    type="button"
+                    class="ml-2 mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    :disabled="avatarModeForm.processing"
+                    @click="usePersonalAvatar"
+                >
+                    {{ avatarModeForm.processing ? 'Aplicando...' : 'Usar minha foto' }}
+                </button>
                 <p v-if="avatarForm.errors.avatar" class="mt-2 text-xs text-red-600">{{ avatarForm.errors.avatar }}</p>
             </section>
 

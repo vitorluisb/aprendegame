@@ -19,12 +19,17 @@ class ShopController extends Controller
 {
     public function __construct(private readonly ShopService $shopService) {}
 
+    private function isStudentContext(User $user): bool
+    {
+        return $user->role === UserRole::Student->value
+            || $user->studentProfile()->withoutGlobalScopes()->exists();
+    }
+
     public function index(): Response|RedirectResponse
     {
         /** @var User $user */
         $user = auth()->user();
-        $isStudentContext = $user->role === UserRole::Student->value
-            || $user->studentProfile()->withoutGlobalScopes()->exists();
+        $isStudentContext = $this->isStudentContext($user);
 
         if (! $isStudentContext) {
             return redirect('/dashboard');
@@ -76,6 +81,10 @@ class ShopController extends Controller
     {
         /** @var User $user */
         $user = auth()->user();
+        if (! $this->isStudentContext($user)) {
+            return redirect('/dashboard');
+        }
+
         $student = $user->ensureStudentProfile();
 
         $item = ShopItem::query()->findOrFail($request->integer('item_id'));
@@ -93,6 +102,10 @@ class ShopController extends Controller
     {
         /** @var User $user */
         $user = auth()->user();
+        if (! $this->isStudentContext($user)) {
+            return redirect('/dashboard');
+        }
+
         $student = $user->ensureStudentProfile();
 
         $item = ShopItem::query()->findOrFail($request->integer('item_id'));
@@ -106,6 +119,10 @@ class ShopController extends Controller
     {
         /** @var User $user */
         $user = auth()->user();
+        if (! $this->isStudentContext($user)) {
+            return redirect('/dashboard');
+        }
+
         $student = $user->ensureStudentProfile();
 
         try {

@@ -1,9 +1,10 @@
 <?php
 
+use App\Domain\Accounts\Models\Student;
 use App\Domain\Content\Models\Path;
 use App\Domain\Content\Models\PathNode;
-use App\Domain\Accounts\Models\Student;
 use App\Domain\Gameplay\Models\Lesson;
+use App\Domain\Gameplay\Models\LessonRun;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -71,6 +72,15 @@ it('student can view a published path', function () {
         );
 });
 
+it('student cannot view an unpublished path directly', function () {
+    $user = User::factory()->create(['role' => 'student']);
+    $path = Path::factory()->create(['published' => false]);
+
+    $this->actingAs($user)
+        ->get("/trilhas/{$path->id}")
+        ->assertNotFound();
+});
+
 it('path show only includes published nodes', function () {
     $user = User::factory()->create(['role' => 'student']);
     $path = Path::factory()->published()->create();
@@ -94,6 +104,52 @@ it('path show includes lessons for each node', function () {
             ->has('nodes.0.lessons', 1)
             ->has('nodes.0.lessons.0.id')
             ->has('nodes.0.lessons.0.title')
+        );
+});
+
+it('path show returns gamified node payload for visual map', function () {
+    $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
+    $path = Path::factory()->published()->create();
+    $node = PathNode::factory()->forPath($path)->create(['order' => 1, 'published' => true]);
+    Lesson::factory()->published()->forNode($node)->create();
+
+    $this->actingAs($user)
+        ->get("/trilhas/{$path->id}")
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('path.total_xp')
+            ->has('path.earned_xp')
+            ->has('path.current_node_order')
+            ->has('nodes.0.status')
+            ->has('nodes.0.progress_questions')
+            ->has('nodes.0.question_target')
+            ->has('nodes.0.xp_total')
+            ->has('nodes.0.xp_earned')
+            ->has('nodes.0.stars')
+            ->has('nodes.0.primary_lesson_id')
+        );
+});
+
+it('path show marks node as completed and unlocks next node after approved run', function () {
+    $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
+    $student = Student::factory()->create(['user_id' => $user->id, 'school_id' => null]);
+    $path = Path::factory()->published()->create();
+    $node1 = PathNode::factory()->forPath($path)->create(['order' => 1, 'published' => true, 'node_type' => 'lesson']);
+    $node2 = PathNode::factory()->forPath($path)->create(['order' => 2, 'published' => true, 'node_type' => 'lesson']);
+    $lesson1 = Lesson::factory()->published()->forNode($node1)->create();
+    Lesson::factory()->published()->forNode($node2)->create();
+
+    LessonRun::factory()->for($student)->for($lesson1)->finished(85)->create([
+        'total_count' => 10,
+        'xp_earned' => 80,
+    ]);
+
+    $this->actingAs($user)
+        ->get("/trilhas/{$path->id}")
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('nodes.0.status', 'completed')
+            ->where('nodes.0.progress_questions', 10)
+            ->where('nodes.1.status', 'unlocked')
+            ->where('path.current_node_order', 2)
         );
 });
 

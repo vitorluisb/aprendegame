@@ -163,7 +163,7 @@ it('equip treats legacy aliases as the same item type', function () {
 it('buy life consumes neurons and restores one life', function () {
     $student = Student::factory()->create([
         'lives_current' => 2,
-        'lives_max' => 5,
+        'lives_max' => 10,
     ]);
     GemTransaction::factory()->create(['student_id' => $student->id, 'amount' => 100]);
 
@@ -177,7 +177,7 @@ it('buy life consumes neurons and restores one life', function () {
 it('buy life fails with insufficient neurons', function () {
     $student = Student::factory()->create([
         'lives_current' => 2,
-        'lives_max' => 5,
+        'lives_max' => 10,
     ]);
     GemTransaction::factory()->create(['student_id' => $student->id, 'amount' => 10]);
 
@@ -189,8 +189,8 @@ it('buy life fails with insufficient neurons', function () {
 
 it('buy life fails when already at max lives', function () {
     $student = Student::factory()->create([
-        'lives_current' => 5,
-        'lives_max' => 5,
+        'lives_current' => 10,
+        'lives_max' => 10,
     ]);
     GemTransaction::factory()->create(['student_id' => $student->id, 'amount' => 100]);
 

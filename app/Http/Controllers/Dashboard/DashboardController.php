@@ -74,6 +74,7 @@ class DashboardController extends Controller
 
         $recommendedPathsQuery = Path::query()
             ->where('published', true)
+            ->whereIn('path_type', Path::TYPES)
             ->with(['grade', 'subject'])
             ->orderBy('path_type')
             ->orderByRaw('(SELECT `order` FROM grades WHERE grades.id = paths.grade_id)')

@@ -8,16 +8,10 @@ trait PasswordValidationRules
 {
     protected function passwordRules(): array
     {
-        $passwordRule = Password::min(12)->mixedCase()->numbers()->symbols();
-
-        if (! app()->environment('testing')) {
-            $passwordRule = $passwordRule->uncompromised();
-        }
-
         return [
             'required',
             'string',
-            $passwordRule,
+            Password::min(8),
             'confirmed',
         ];
     }

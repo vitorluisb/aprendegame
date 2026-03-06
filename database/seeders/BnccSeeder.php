@@ -77,7 +77,7 @@ class BnccSeeder extends Seeder
     }
 
     /**
-     * @param  array<string, Grade>    $grades
+     * @param  array<string, Grade>  $grades
      * @param  array<string, Subject>  $subjects
      */
     private function seedPaths(array $grades, array $subjects): void
@@ -145,31 +145,10 @@ class BnccSeeder extends Seeder
             );
         }
 
-        // ── Vestibulares ────────────────────────────────────────────────────────
-        $vestibularPaths = [
-            ['subject' => 'matematica', 'path_type' => 'vestibular_fuvest', 'title' => 'FUVEST — Matemática'],
-            ['subject' => 'fisica',     'path_type' => 'vestibular_fuvest', 'title' => 'FUVEST — Física'],
-            ['subject' => 'quimica',    'path_type' => 'vestibular_fuvest', 'title' => 'FUVEST — Química'],
-            ['subject' => 'biologia',   'path_type' => 'vestibular_fuvest', 'title' => 'FUVEST — Biologia'],
-            ['subject' => 'portugues',  'path_type' => 'vestibular_fuvest', 'title' => 'FUVEST — Língua Portuguesa'],
-            ['subject' => 'historia',   'path_type' => 'vestibular_fuvest', 'title' => 'FUVEST — História'],
-            ['subject' => 'matematica', 'path_type' => 'vestibular_unicamp', 'title' => 'UNICAMP — Matemática'],
-            ['subject' => 'fisica',     'path_type' => 'vestibular_unicamp', 'title' => 'UNICAMP — Física'],
-            ['subject' => 'quimica',    'path_type' => 'vestibular_unicamp', 'title' => 'UNICAMP — Química'],
-            ['subject' => 'biologia',   'path_type' => 'vestibular_unicamp', 'title' => 'UNICAMP — Biologia'],
-            ['subject' => 'portugues',  'path_type' => 'vestibular_unicamp', 'title' => 'UNICAMP — Língua Portuguesa'],
-        ];
-
-        foreach ($vestibularPaths as $item) {
-            Path::updateOrCreate(
-                ['grade_id' => $grades['EM03']->id, 'subject_id' => $subjects[$item['subject']]->id, 'path_type' => $item['path_type']],
-                ['title' => $item['title'], 'published' => true]
-            );
-        }
     }
 
     /**
-     * @param  array<string, Grade>    $grades
+     * @param  array<string, Grade>  $grades
      * @param  array<string, Subject>  $subjects
      */
     private function seedSkills(array $grades, array $subjects): void

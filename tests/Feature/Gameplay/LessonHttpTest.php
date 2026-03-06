@@ -25,8 +25,8 @@ it('student can access lesson play page', function () {
             ->component('Lessons/Play')
             ->has('lesson.id')
             ->has('run_id')
-            ->where('lives_current', 5)
-            ->where('lives_max', 5)
+            ->where('lives_current', 10)
+            ->where('lives_max', 10)
             ->has('questions')
         );
 });
@@ -105,7 +105,7 @@ it('correct answer returns correct true', function () {
             'answer' => 'A',
             'time_ms' => 2000,
         ])
-        ->assertJson(['correct' => true, 'remaining_lives' => 5, 'lives_max' => 5]);
+        ->assertJson(['correct' => true, 'remaining_lives' => 10, 'lives_max' => 10]);
 });
 
 it('wrong answer returns correct false', function () {
@@ -127,7 +127,7 @@ it('wrong answer returns correct false', function () {
             'answer' => 'B',
             'time_ms' => 2000,
         ])
-        ->assertJson(['correct' => false, 'remaining_lives' => 4, 'lives_max' => 5]);
+        ->assertJson(['correct' => false, 'remaining_lives' => 9, 'lives_max' => 10]);
 });
 
 it('student can finish a lesson run', function () {
@@ -183,7 +183,7 @@ it('answer endpoint validates required fields', function () {
 
 it('answer endpoint blocks student without lives', function () {
     $user = User::factory()->create(['role' => 'student']);
-    $student = Student::factory()->create(['user_id' => $user->id, 'lives_current' => 0, 'lives_max' => 5]);
+    $student = Student::factory()->create(['user_id' => $user->id, 'lives_current' => 0, 'lives_max' => 10]);
     $lesson = Lesson::factory()->published()->create();
     $question = Question::factory()->multipleChoice()->create(['correct_answer' => 'A']);
     $lesson->questions()->attach($question->id, ['order' => 1]);
@@ -202,5 +202,72 @@ it('answer endpoint blocks student without lives', function () {
         ])
         ->assertStatus(422)
         ->assertJsonStructure(['message', 'remaining_lives', 'lives_max'])
-        ->assertJson(['remaining_lives' => 0, 'lives_max' => 5]);
+        ->assertJson(['remaining_lives' => 0, 'lives_max' => 10]);
+});
+
+it('student cannot answer another student run', function () {
+    $owner = User::factory()->create(['role' => 'student']);
+    $ownerStudent = Student::factory()->create(['user_id' => $owner->id]);
+    $intruder = User::factory()->create(['role' => 'student']);
+    Student::factory()->create(['user_id' => $intruder->id]);
+
+    $lesson = Lesson::factory()->published()->create();
+    $question = Question::factory()->multipleChoice()->create(['correct_answer' => 'A']);
+    $lesson->questions()->attach($question->id, ['order' => 1]);
+
+    $run = LessonRun::factory()->create([
+        'student_id' => $ownerStudent->id,
+        'lesson_id' => $lesson->id,
+        'finished_at' => null,
+    ]);
+
+    $this->actingAs($intruder)
+        ->postJson("/runs/{$run->id}/responder", [
+            'question_id' => $question->id,
+            'answer' => 'A',
+            'time_ms' => 1000,
+        ])
+        ->assertForbidden();
+});
+
+it('student cannot finish another student run', function () {
+    $owner = User::factory()->create(['role' => 'student']);
+    $ownerStudent = Student::factory()->create(['user_id' => $owner->id]);
+    $intruder = User::factory()->create(['role' => 'student']);
+    Student::factory()->create(['user_id' => $intruder->id]);
+
+    $lesson = Lesson::factory()->published()->create();
+    $run = LessonRun::factory()->create([
+        'student_id' => $ownerStudent->id,
+        'lesson_id' => $lesson->id,
+        'finished_at' => null,
+    ]);
+
+    $this->actingAs($intruder)
+        ->postJson("/runs/{$run->id}/finalizar")
+        ->assertForbidden();
+});
+
+it('answer endpoint rejects question that is not attached to run lesson', function () {
+    $user = User::factory()->create(['role' => 'student']);
+    $student = Student::factory()->create(['user_id' => $user->id]);
+    $lesson = Lesson::factory()->published()->create();
+    $attachedQuestion = Question::factory()->multipleChoice()->create(['correct_answer' => 'A']);
+    $foreignQuestion = Question::factory()->multipleChoice()->create(['correct_answer' => 'B']);
+    $lesson->questions()->attach($attachedQuestion->id, ['order' => 1]);
+
+    $run = LessonRun::factory()->create([
+        'student_id' => $student->id,
+        'lesson_id' => $lesson->id,
+        'finished_at' => null,
+    ]);
+
+    $this->actingAs($user)
+        ->postJson("/runs/{$run->id}/responder", [
+            'question_id' => $foreignQuestion->id,
+            'answer' => 'A',
+            'time_ms' => 2000,
+        ])
+        ->assertStatus(422)
+        ->assertJsonStructure(['message', 'remaining_lives', 'lives_max']);
 });

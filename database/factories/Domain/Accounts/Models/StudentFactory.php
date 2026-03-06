@@ -20,8 +20,8 @@ class StudentFactory extends Factory
             'name' => fake()->name(),
             'birth_date' => fake()->date(),
             'avatar_url' => fake()->imageUrl(),
-            'lives_current' => 5,
-            'lives_max' => 5,
+            'lives_current' => Student::DEFAULT_LIVES,
+            'lives_max' => Student::DEFAULT_LIVES,
             'lives_refilled_at' => now(),
         ];
     }

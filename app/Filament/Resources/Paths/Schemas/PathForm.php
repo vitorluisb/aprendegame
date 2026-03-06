@@ -42,8 +42,6 @@ class PathForm
                             ->options([
                                 'regular' => 'Ensino Regular',
                                 'enem' => 'ENEM',
-                                'vestibular_fuvest' => 'Vestibular FUVEST',
-                                'vestibular_unicamp' => 'Vestibular UNICAMP',
                             ])
                             ->required()
                             ->default('regular'),

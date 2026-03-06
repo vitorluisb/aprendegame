@@ -28,19 +28,26 @@ class AIService
      */
     public function generateQuestions(BnccSkill $skill, int $count, string $model): array
     {
+        if (blank($this->key) && ! app()->environment('testing')) {
+            throw new RuntimeException('AI API key não configurada.');
+        }
+
         $prompt = GenerateQuestionsPrompt::build($skill, $count);
 
-        $response = Http::withHeaders([
-            'x-api-key' => $this->key,
-            'anthropic-version' => '2023-06-01',
-            'content-type' => 'application/json',
-        ])->post($this->url, [
-            'model' => $model,
-            'max_tokens' => 4096,
-            'messages' => [
-                ['role' => 'user', 'content' => $prompt],
-            ],
-        ]);
+        $response = Http::connectTimeout(10)
+            ->timeout(45)
+            ->retry(3, 1000)
+            ->withHeaders([
+                'x-api-key' => $this->key,
+                'anthropic-version' => '2023-06-01',
+                'content-type' => 'application/json',
+            ])->post($this->url, [
+                'model' => $model,
+                'max_tokens' => 4096,
+                'messages' => [
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+            ]);
 
         if (! $response->successful()) {
             throw new RuntimeException("AI API error: HTTP {$response->status()}");

@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Domain\Accounts\Services\AuditLog;
 use App\Domain\Accounts\Enums\UserRole;
+use App\Domain\Accounts\Services\AuditLog;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
 class SocialAuthController extends Controller
@@ -22,26 +20,31 @@ class SocialAuthController extends Controller
     {
         $socialUser = Socialite::driver('google')->user();
 
-        $user = User::query()->updateOrCreate(
-            ['email' => $socialUser->getEmail()],
-            [
-                'name' => $socialUser->getName(),
-                'password' => Hash::make(Str::random(40)),
-                'role' => UserRole::Student->value,
+        $existingUser = User::query()->where('email', $socialUser->getEmail())->first();
+
+        if ($existingUser) {
+            $existingUser->update([
                 'provider' => 'google',
                 'provider_id' => $socialUser->getId(),
-                'avatar_url' => $socialUser->getAvatar(),
-                'email_verified_at' => now(),
-            ],
-        );
+                'avatar_url' => $existingUser->avatar_url ?? $socialUser->getAvatar(),
+            ]);
 
-        if ($user->shouldHaveStudentProfile()) {
-            $user->ensureStudentProfile();
+            Auth::login($existingUser);
+            AuditLog::record($existingUser, 'login', ['provider' => 'google']);
+
+            return $existingUser->role === UserRole::Guardian->value
+                ? redirect()->route('guardian.dashboard')
+                : redirect()->intended('/dashboard');
         }
 
-        Auth::login($user);
-        AuditLog::record($user, 'login', ['provider' => 'google']);
+        // Novo usuário: armazenar dados na sessão e perguntar se é aluno ou responsável
+        session()->put('google_pending_user', [
+            'name' => $socialUser->getName(),
+            'email' => $socialUser->getEmail(),
+            'provider_id' => $socialUser->getId(),
+            'avatar_url' => $socialUser->getAvatar(),
+        ]);
 
-        return redirect()->intended('/dashboard');
+        return redirect()->route('select-role');
     }
 }

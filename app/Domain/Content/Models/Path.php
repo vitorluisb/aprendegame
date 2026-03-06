@@ -15,7 +15,7 @@ class Path extends Model
     use HasFactory;
 
     /** @var string[] */
-    public const TYPES = ['regular', 'enem', 'vestibular_fuvest', 'vestibular_unicamp'];
+    public const TYPES = ['regular', 'enem'];
 
     protected $fillable = [
         'grade_id',
@@ -40,11 +40,6 @@ class Path extends Model
     public function scopeEnem(Builder $query): Builder
     {
         return $query->where('path_type', 'enem');
-    }
-
-    public function scopeVestibular(Builder $query): Builder
-    {
-        return $query->whereIn('path_type', ['vestibular_fuvest', 'vestibular_unicamp']);
     }
 
     public function grade(): BelongsTo

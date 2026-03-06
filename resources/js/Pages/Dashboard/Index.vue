@@ -63,8 +63,6 @@ function pathTypeLabel(type) {
     const map = {
         regular: 'Regular',
         enem: 'ENEM',
-        vestibular_fuvest: 'FUVEST',
-        vestibular_unicamp: 'UNICAMP',
     };
 
     return map[type] ?? type;
