@@ -21,9 +21,9 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - app-storage:/var/www/html/storage
+      - aprendegame_storage:/var/www/html/storage
     networks:
-      - appnet
+      - aprendegame_net
 
   web:
     image: nginx:1.27-alpine
@@ -34,9 +34,9 @@ services:
       - "8002:80"
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - app-storage:/var/www/html/storage
+      - aprendegame_storage:/var/www/html/storage
     networks:
-      aprendegame_net: # era: appnet
+      aprendegame_net: # era: aprendegame_net
 
 
   horizon:
@@ -58,9 +58,9 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - app-storage:/var/www/html/storage
+      - aprendegame_storage:/var/www/html/storage
     networks:
-      - appnet
+      - aprendegame_net
 
   scheduler:
     image: aprendegame/app:latest
@@ -81,9 +81,9 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - app-storage:/var/www/html/storage
+      - aprendegame_storage:/var/www/html/storage
     networks:
-      - appnet
+      - aprendegame_net
 
   db:
     image: mysql:8.4
@@ -94,34 +94,34 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - db-data:/var/lib/mysql
+      - aprendegame_db:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 10
     networks:
-      - appnet
+      - aprendegame_net
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
-      - redis-data:/data
+      - aprendegame_redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 10
     networks:
-      - appnet
+      - aprendegame_net
 
 networks:
-  appnet:
+  aprendegame_net:
     driver: bridge
 
 volumes:
-  app-storage:
-  db-data:
-  redis-data:
+  aprendegame_storage:
+  aprendegame_db:
+  aprendegame_redis:
