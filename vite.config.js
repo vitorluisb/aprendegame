@@ -20,8 +20,8 @@ export default defineConfig({
         VitePWA({
             registerType: 'autoUpdate',
             manifest: {
-                name: 'Estudos BNCC',
-                short_name: 'BNCC',
+                name: 'AprendeGame',
+                short_name: 'AprendeGame',
                 theme_color: '#1565C0',
                 icons: [
                     { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
