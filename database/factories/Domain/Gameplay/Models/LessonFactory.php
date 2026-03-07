@@ -18,8 +18,11 @@ class LessonFactory extends Factory
         return [
             'node_id' => $node->id,
             'title' => fake()->words(4, true),
+            'lesson_type' => fake()->randomElement(['practice', 'review', 'boss']),
+            'order' => fake()->numberBetween(1, 5),
             'interaction_count' => fake()->numberBetween(8, 12),
             'difficulty' => fake()->numberBetween(1, 5),
+            'xp_reward' => fake()->numberBetween(60, 140),
             'published' => false,
         ];
     }

@@ -30,6 +30,14 @@ class PathsTable
                     ->label('Disciplina')
                     ->sortable(),
 
+                TextColumn::make('bimester')
+                    ->label('Bimestre')
+                    ->sortable(),
+
+                TextColumn::make('order')
+                    ->label('Ordem')
+                    ->sortable(),
+
                 TextColumn::make('path_type')
                     ->label('Tipo')
                     ->badge()
@@ -45,8 +53,12 @@ class PathsTable
                     }),
 
                 TextColumn::make('nodes_count')
-                    ->label('Nós')
+                    ->label('Missões')
                     ->counts('nodes')
+                    ->sortable(),
+
+                TextColumn::make('xp_total')
+                    ->label('XP Total')
                     ->sortable(),
 
                 ToggleColumn::make('published')

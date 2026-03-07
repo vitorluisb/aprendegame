@@ -27,7 +27,7 @@ class PathNodesTable
                     ->sortable(),
 
                 TextColumn::make('title')
-                    ->label('Título')
+                    ->label('Missão')
                     ->searchable(),
 
                 TextColumn::make('node_type')
@@ -35,14 +35,22 @@ class PathNodesTable
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'lesson' => 'info',
+                        'review' => 'warning',
+                        'bonus' => 'success',
                         'boss' => 'danger',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'lesson' => 'Aulas',
-                        'boss' => 'Desafio Final',
+                        'lesson' => 'Missão de Aula',
+                        'review' => 'Revisão',
+                        'bonus' => 'Bônus',
+                        'boss' => 'Missão Final',
                         default => $state,
                     }),
+
+                TextColumn::make('xp_reward')
+                    ->label('XP')
+                    ->sortable(),
 
                 TextColumn::make('lessons_count')
                     ->label('Aulas')
@@ -58,10 +66,12 @@ class PathNodesTable
                     ->relationship('path', 'title'),
 
                 SelectFilter::make('node_type')
-                    ->label('Tipo do Nó')
+                    ->label('Tipo da Missão')
                     ->options([
-                        'lesson' => 'Aulas',
-                        'boss' => 'Desafio Final',
+                        'lesson' => 'Missão de Aula',
+                        'review' => 'Revisão',
+                        'bonus' => 'Bônus',
+                        'boss' => 'Missão Final',
                     ]),
 
                 TernaryFilter::make('published')

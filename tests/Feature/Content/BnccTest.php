@@ -1,10 +1,10 @@
 <?php
 
-use App\Models\User;
 use App\Domain\Content\Actions\ImportBnccSkills;
 use App\Domain\Content\Models\BnccSkill;
 use App\Domain\Content\Models\Grade;
 use App\Domain\Content\Models\Subject;
+use App\Models\User;
 use Illuminate\Database\QueryException;
 
 it('bncc skill code must be unique', function () {
@@ -90,4 +90,35 @@ it('bncc skill belongs to grade and subject', function () {
 
     expect($skill->grade->id)->toBe($grade->id);
     expect($skill->subject->id)->toBe($subject->id);
+});
+
+it('bncc seeder loads curriculum skills from docs by grade and subject', function () {
+    $this->seed(\Database\Seeders\BnccSeeder::class);
+
+    $grade = Grade::query()->where('code', 'EF03')->firstOrFail();
+    $subject = Subject::query()->where('slug', 'portugues')->firstOrFail();
+
+    expect(BnccSkill::query()->where('version', 2)->count())->toBeGreaterThan(300);
+    expect(
+        BnccSkill::query()
+            ->where('grade_id', $grade->id)
+            ->where('subject_id', $subject->id)
+            ->where('thematic_unit', 'Bimestre 1')
+            ->exists()
+    )->toBeTrue();
+});
+
+it('bncc seeder includes educacao fisica for anos iniciais', function () {
+    $this->seed(\Database\Seeders\BnccSeeder::class);
+
+    $grade = Grade::query()->where('code', 'EF03')->firstOrFail();
+    $subject = Subject::query()->where('slug', 'educacao-fisica')->firstOrFail();
+
+    expect(
+        BnccSkill::query()
+            ->where('grade_id', $grade->id)
+            ->where('subject_id', $subject->id)
+            ->where('active', true)
+            ->exists()
+    )->toBeTrue();
 });

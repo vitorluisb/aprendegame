@@ -81,7 +81,7 @@ function pathTypeCountLabel(count) {
                                         <span class="rounded-full px-2 py-0.5 text-[11px] font-bold ring-1" :class="stageBadge(path.grade.stage).color">
                                             {{ stageBadge(path.grade.stage).label }}
                                         </span>
-                                        <span class="text-xs font-semibold text-slate-500">{{ path.node_count }} nós</span>
+                                        <span class="text-xs font-semibold text-slate-500">{{ path.node_count }} missões</span>
                                     </div>
                                     <p class="mt-1 text-xs font-semibold text-sky-600">Toque para abrir o mapa →</p>
                                 </div>
@@ -108,7 +108,7 @@ function pathTypeCountLabel(count) {
                                 <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-lg font-black text-white">E</div>
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate text-sm font-black text-slate-800 sm:text-base">{{ path.title }}</p>
-                                    <p class="mt-1 text-xs font-semibold text-violet-600">{{ path.node_count }} nós · Toque para abrir →</p>
+                                    <p class="mt-1 text-xs font-semibold text-violet-600">{{ path.node_count }} missões · Toque para abrir →</p>
                                 </div>
                                 <div class="rounded-full bg-violet-600 px-2 py-1 text-xs font-black text-white">ENEM</div>
                             </div>

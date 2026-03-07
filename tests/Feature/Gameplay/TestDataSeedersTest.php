@@ -2,8 +2,10 @@
 
 use App\Domain\Accounts\Models\Student;
 use App\Domain\Content\Models\BnccSkill;
+use App\Domain\Content\Models\Grade;
 use App\Domain\Content\Models\Path;
 use App\Domain\Content\Models\PathNode;
+use App\Domain\Content\Models\Subject;
 use App\Domain\Gameplay\Models\Lesson;
 use Database\Seeders\Gameplay\StudentNeuronsSeeder;
 use Database\Seeders\Gameplay\TrailContentSeeder;
@@ -28,7 +30,15 @@ it('seeds 2000 neurons for each student without duplicating seed transaction', f
 });
 
 it('seeds trilhas with published nodes lessons and playable questions', function () {
-    $path = Path::factory()->published()->create();
+    $grade = Grade::factory()->create([
+        'stage' => 'fundamental_1',
+        'order' => 1,
+    ]);
+    $subject = Subject::factory()->create();
+    $path = Path::factory()->published()->create([
+        'grade_id' => $grade->id,
+        'subject_id' => $subject->id,
+    ]);
 
     BnccSkill::factory()->create([
         'grade_id' => $path->grade_id,
@@ -43,7 +53,7 @@ it('seeds trilhas with published nodes lessons and playable questions', function
         ->orderBy('order')
         ->get();
 
-    expect($nodes)->toHaveCount(3);
+    expect($nodes)->toHaveCount(15);
 
     $lessons = Lesson::query()
         ->whereIn('node_id', $nodes->pluck('id'))
@@ -51,7 +61,7 @@ it('seeds trilhas with published nodes lessons and playable questions', function
         ->orderBy('id')
         ->get();
 
-    expect($lessons)->toHaveCount(3);
+    expect($lessons)->toHaveCount(15);
 
     $firstLesson = $lessons->first();
 

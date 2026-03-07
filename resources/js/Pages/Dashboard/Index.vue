@@ -106,7 +106,7 @@ function pathTypeLabel(type) {
                 <div class="mt-4">
                     <div class="flex items-end justify-between text-sm">
                         <span class="font-semibold">Nível {{ student.level }}</span>
-                        <span class="opacity-80">{{ student.xp_in_level }}/100 XP · ❤ {{ student.lives_current }}/{{ student.lives_max }}</span>
+                        <span class="opacity-80">{{ student.xp_in_level }}/100 XP · 💎 {{ student.total_gems }} Neurons · ❤ {{ student.lives_current }}/{{ student.lives_max }}</span>
                     </div>
                     <div class="mt-1.5 h-2.5 overflow-hidden rounded-full bg-white/30">
                         <div

@@ -15,7 +15,7 @@ class PathNodeForm
     {
         return $schema
             ->components([
-                Section::make('Dados do Nó')
+                Section::make('Dados da Missão')
                     ->columns(2)
                     ->schema([
                         Select::make('path_id')
@@ -27,7 +27,7 @@ class PathNodeForm
                             ->columnSpanFull(),
 
                         TextInput::make('title')
-                            ->label('Título do Nó')
+                            ->label('Título da Missão')
                             ->required()
                             ->maxLength(255)
                             ->columnSpanFull(),
@@ -38,11 +38,20 @@ class PathNodeForm
                             ->required()
                             ->minValue(1),
 
+                        TextInput::make('xp_reward')
+                            ->label('XP da Parada')
+                            ->integer()
+                            ->required()
+                            ->minValue(0)
+                            ->default(100),
+
                         Select::make('node_type')
-                            ->label('Tipo do Nó')
+                            ->label('Tipo da Missão')
                             ->options([
-                                'lesson' => 'Aulas',
-                                'boss' => 'Desafio Final',
+                                'lesson' => 'Missão de Aula',
+                                'review' => 'Revisão',
+                                'bonus' => 'Bônus',
+                                'boss' => 'Missão Final',
                             ])
                             ->required()
                             ->default('lesson'),
@@ -57,7 +66,7 @@ class PathNodeForm
 
                         Toggle::make('published')
                             ->label('Publicado')
-                            ->helperText('Apenas nós publicados aparecem para os alunos.')
+                            ->helperText('Apenas missões publicadas aparecem para os alunos.')
                             ->default(false),
                     ]),
             ]);

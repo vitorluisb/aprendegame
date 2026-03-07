@@ -8,8 +8,14 @@ use App\Domain\Gameplay\Models\LessonRun;
 
 class PathProgressService
 {
+    public function __construct(private readonly PathUnlockService $pathUnlockService) {}
+
     public function getNodeStatus(PathNode $node, Student $student): string
     {
+        if (! $this->pathUnlockService->isUnlockedForStudent($node->path, $student)) {
+            return 'locked';
+        }
+
         if ($node->order === 1) {
             return 'unlocked';
         }
@@ -18,7 +24,7 @@ class PathProgressService
             ->where('order', $node->order - 1)
             ->first();
 
-        if (!$previousNode) {
+        if (! $previousNode) {
             return 'locked';
         }
 

@@ -90,32 +90,30 @@ function nodeStateLabel(status) {
     const labels = {
         completed: 'Concluído',
         unlocked: 'Disponível',
-        locked: 'Bloqueado',
+        locked: 'Bloqueada',
     };
 
     return labels[status] ?? 'Disponível';
 }
 
-function zigzagClass(index) {
-    const classes = [
-        'self-center md:self-start',
-        'self-center',
-        'self-center md:self-end',
-    ];
-
-    return classes[index % 3];
+function isCurrentNode(node) {
+    return node.status === 'unlocked' && node.order === props.path.current_node_order;
 }
 
 function nodeCircleClass(node) {
     if (node.status === 'locked') {
-        return 'bg-[#3a3a3a] opacity-50';
+        return 'bg-[#3a3a3a] border-white/25 text-white/70';
     }
 
     if (node.status === 'completed') {
-        return 'bg-[#4CAF50]';
+        return 'bg-[#4CAF50] border-emerald-200 text-white';
     }
 
-    return 'pulse-ring bg-white/20';
+    if (isCurrentNode(node)) {
+        return 'pulse-ring bg-yellow-300 border-yellow-100 text-slate-900';
+    }
+
+    return 'bg-white/20 border-white/80 text-white';
 }
 
 function canOpenNode(node) {
@@ -134,6 +132,10 @@ function handleNodeClick(event, node) {
     if (!canOpenNode(node)) {
         event.preventDefault();
     }
+}
+
+function displayMissionTitle(title) {
+    return String(title ?? '').replace(/^m[oó]dulo/iu, 'Missão');
 }
 </script>
 
@@ -171,52 +173,51 @@ function handleNodeClick(event, node) {
                 Esta trilha ainda não possui conteúdo publicado.
             </div>
 
-            <div v-else class="relative z-10 mt-8 pb-24">
-                <div class="absolute left-1/2 top-2 h-[calc(100%-2rem)] -translate-x-1/2 border-l-[3px] border-dashed border-white/40" />
-
-                <div class="relative flex flex-col gap-8">
+            <div v-else class="relative z-10 mt-8 pb-12">
+                <div class="relative flex flex-col items-center gap-0">
                     <div
                         v-for="(node, index) in nodes"
                         :key="node.id"
-                        class="w-full max-w-[300px]"
-                        :class="zigzagClass(index)"
+                        class="relative flex w-full max-w-sm flex-col items-center pb-10 last:pb-0"
                     >
-                        <p v-if="node.status === 'completed'" class="mb-1 text-center text-base tracking-wide">⭐{{ '⭐'.repeat(Math.max(node.stars - 1, 0)) }}</p>
+                        <div
+                            v-if="index < nodes.length - 1"
+                            class="absolute left-1/2 top-24 z-0 h-[calc(100%-3.5rem)] w-[5px] -translate-x-1/2 rounded-full"
+                            :class="node.status === 'completed' ? 'bg-emerald-300/80' : 'bg-white/35'"
+                        />
 
                         <Link
                             :href="lessonHref(node)"
-                            class="group relative block w-full rounded-2xl border border-white/20 bg-black/25 p-4 text-left shadow-lg backdrop-blur transition active:scale-[0.99] hover:bg-black/35"
-                            :class="canOpenNode(node) ? 'cursor-pointer' : 'cursor-not-allowed opacity-85'"
+                            class="group relative z-10 flex items-center justify-center rounded-full border-[3px] font-black shadow-xl backdrop-blur transition active:scale-95"
+                            :class="[
+                                nodeCircleClass(node),
+                                canOpenNode(node) ? 'cursor-pointer hover:scale-105' : 'cursor-not-allowed',
+                                node.is_boss ? 'h-24 w-24 text-3xl boss-glow' : 'h-20 w-20 text-2xl',
+                                isCurrentNode(node) ? 'ring-8 ring-yellow-200/30' : '',
+                            ]"
                             @click="handleNodeClick($event, node)"
                         >
-                            <span class="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full border border-white/20 bg-black/45 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide">
-                                {{ resolveNodeType(node, index).icon }} {{ resolveNodeType(node, index).label }}
+                            <span
+                                v-if="isCurrentNode(node)"
+                                class="absolute -top-3 rounded-full border border-yellow-200/70 bg-yellow-300 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-900"
+                            >
+                                Atual
                             </span>
 
-                            <div class="mt-3 flex items-center gap-3">
-                                <div
-                                    class="relative flex shrink-0 items-center justify-center rounded-full border-2 border-white/60 text-2xl font-bold"
-                                    :class="[nodeCircleClass(node), node.is_boss ? 'h-[88px] w-[88px]' : 'h-[72px] w-[72px]', resolveNodeType(node, index).nodeClass]"
-                                    :style="node.status === 'unlocked' ? { boxShadow: `0 0 18px ${resolveNodeType(node, index).color}` } : {}"
-                                >
-                                    <span v-if="node.status === 'locked'">🔒</span>
-                                    <span v-else-if="node.status === 'completed'">✓</span>
-                                    <span v-else>{{ resolveNodeType(node, index).icon }}</span>
-                                </div>
-
-                                <div class="min-w-0 flex-1">
-                                    <p class="truncate text-sm font-black sm:text-base">{{ node.title }}</p>
-                                    <p class="mt-1 text-xs text-white/75">{{ nodeStateLabel(node.status) }} · {{ node.progress_questions }}/{{ node.question_target }} questões</p>
-                                    <p class="mt-2 inline-flex rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[11px] font-bold">
-                                        +{{ node.xp_total }} XP
-                                    </p>
-                                </div>
-                            </div>
-
-                            <p class="mt-3 text-right text-xs font-semibold text-white/80">
-                                {{ canOpenNode(node) ? 'Toque para jogar →' : 'Nó bloqueado' }}
-                            </p>
+                            <span v-if="node.status === 'locked'">🔒</span>
+                            <span v-else-if="node.status === 'completed'">✓</span>
+                            <span v-else>{{ resolveNodeType(node, index).icon }}</span>
                         </Link>
+
+                        <div class="relative z-10 mt-3 w-full max-w-[280px] rounded-2xl border border-white/20 bg-black/25 px-3 py-2 text-center backdrop-blur">
+                            <p class="truncate text-sm font-black sm:text-base">{{ displayMissionTitle(node.title) }}</p>
+                            <p class="mt-0.5 text-xs text-white/75">{{ resolveNodeType(node, index).label }} · {{ nodeStateLabel(node.status) }}</p>
+                            <div class="mt-2 flex items-center justify-center gap-2 text-[11px] font-bold">
+                                <span class="rounded-full border border-white/20 bg-white/10 px-2 py-0.5">{{ node.progress_questions }}/{{ node.question_target }} questões</span>
+                                <span class="rounded-full border border-white/20 bg-white/10 px-2 py-0.5">+{{ node.xp_total }} XP</span>
+                            </div>
+                            <p v-if="node.status === 'completed'" class="mt-1 text-sm tracking-wide">⭐{{ '⭐'.repeat(Math.max(node.stars - 1, 0)) }}</p>
+                        </div>
                     </div>
                 </div>
             </div>

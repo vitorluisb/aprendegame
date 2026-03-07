@@ -21,6 +21,12 @@ class PathFactory extends Factory
             'grade_id' => $grade->id,
             'subject_id' => $subject->id,
             'title' => "{$grade->name} — {$subject->name}",
+            'bimester' => fake()->numberBetween(1, 4),
+            'description' => fake()->sentence(),
+            'bncc_skills' => [],
+            'xp_total' => 0,
+            'unlocks_after_path_id' => null,
+            'order' => fake()->numberBetween(1, 4),
             'published' => false,
             'path_type' => 'regular',
         ];

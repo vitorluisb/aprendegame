@@ -4,6 +4,7 @@ namespace App\Domain\Accounts\Models;
 
 use App\Domain\Accounts\Scopes\SchoolScope;
 use App\Domain\Content\Models\Grade;
+use App\Domain\Content\Models\StudentPathProgress;
 use App\Domain\Gameplay\Models\GemTransaction;
 use App\Domain\Gameplay\Models\Streak;
 use App\Domain\Gameplay\Models\StudentItem;
@@ -106,6 +107,11 @@ class Student extends Model
     public function inventory(): HasMany
     {
         return $this->hasMany(StudentItem::class);
+    }
+
+    public function pathProgress(): HasMany
+    {
+        return $this->hasMany(StudentPathProgress::class);
     }
 
     public function loseLife(int $amount = 1): void

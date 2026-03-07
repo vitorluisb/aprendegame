@@ -18,7 +18,7 @@ class TrailContentSeeder extends Seeder
 
         Path::query()
             ->where('published', true)
-            ->with(['grade:id,name', 'subject:id,name'])
+            ->with(['grade:id,name,stage,order', 'subject:id,name'])
             ->orderBy('id')
             ->get()
             ->each(function (Path $path) use ($fallbackSkillIds): void {
@@ -36,15 +36,17 @@ class TrailContentSeeder extends Seeder
                     return;
                 }
 
-                foreach ([1, 2, 3] as $order) {
+                $missionCount = $this->resolveMissionCount($path);
+
+                foreach (range(1, $missionCount) as $order) {
                     $node = PathNode::query()->updateOrCreate(
                         [
                             'path_id' => $path->id,
                             'order' => $order,
                         ],
                         [
-                            'title' => "Módulo {$order} - {$path->subject->name}",
-                            'node_type' => $order === 3 ? 'boss' : 'lesson',
+                            'title' => "Missão {$order} - {$path->subject->name}",
+                            'node_type' => $order === $missionCount ? 'boss' : 'lesson',
                             'skill_ids' => $skillIds->take(3)->values()->all(),
                             'published' => true,
                         ]
@@ -65,6 +67,38 @@ class TrailContentSeeder extends Seeder
                     $this->ensureLessonQuestions($lesson, $skillIds, 10);
                 }
             });
+    }
+
+    private function resolveMissionCount(Path $path): int
+    {
+        $stage = $path->grade?->stage;
+        $gradeOrder = (int) ($path->grade?->order ?? 0);
+
+        if ($stage === 'fundamental_1') {
+            return 15;
+        }
+
+        if ($stage === 'fundamental_2') {
+            return 25;
+        }
+
+        if ($stage === 'medio') {
+            return 30;
+        }
+
+        if ($stage === 'fundamental') {
+            return $gradeOrder > 0 && $gradeOrder <= 3 ? 15 : 25;
+        }
+
+        if ($gradeOrder > 0 && $gradeOrder <= 3) {
+            return 15;
+        }
+
+        if ($gradeOrder > 0 && $gradeOrder <= 7) {
+            return 25;
+        }
+
+        return 30;
     }
 
     private function ensureLessonQuestions(Lesson $lesson, Collection $skillIds, int $targetCount): void

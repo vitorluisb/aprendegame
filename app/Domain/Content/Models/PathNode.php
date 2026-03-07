@@ -19,6 +19,7 @@ class PathNode extends Model
         'order',
         'title',
         'node_type',
+        'xp_reward',
         'skill_ids',
         'published',
     ];
@@ -29,6 +30,7 @@ class PathNode extends Model
             'skill_ids' => 'array',
             'published' => 'boolean',
             'order' => 'integer',
+            'xp_reward' => 'integer',
         ];
     }
 

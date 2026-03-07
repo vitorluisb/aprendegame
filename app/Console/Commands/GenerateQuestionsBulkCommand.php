@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Domain\AI\Jobs\GenerateQuestionsForSkill;
 use App\Domain\AI\Models\AiJob;
+use App\Domain\AI\Services\AIService;
 use App\Domain\Content\Models\BnccSkill;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,7 +17,7 @@ class GenerateQuestionsBulkCommand extends Command
         {--subject= : Slug da matéria (ex: matematica)}
         {--grade= : Código da série (ex: EF06)}
         {--count=10 : Quantidade por habilidade (1-50)}
-        {--model=claude-sonnet-4-6 : Modelo de IA}
+        {--model='.AIService::DEFAULT_MODEL.' : Modelo de IA}
         {--limit=0 : Limite de habilidades processadas}';
 
     protected $description = 'Despacha geração de questões em massa por habilidade BNCC com rastreio por lote.';

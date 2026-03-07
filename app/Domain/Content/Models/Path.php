@@ -21,6 +21,12 @@ class Path extends Model
         'grade_id',
         'subject_id',
         'title',
+        'bimester',
+        'description',
+        'bncc_skills',
+        'xp_total',
+        'unlocks_after_path_id',
+        'order',
         'published',
         'path_type',
     ];
@@ -29,6 +35,10 @@ class Path extends Model
     {
         return [
             'published' => 'boolean',
+            'bncc_skills' => 'array',
+            'bimester' => 'integer',
+            'xp_total' => 'integer',
+            'order' => 'integer',
         ];
     }
 
@@ -55,5 +65,20 @@ class Path extends Model
     public function nodes(): HasMany
     {
         return $this->hasMany(PathNode::class)->orderBy('order');
+    }
+
+    public function unlocksAfterPath(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'unlocks_after_path_id');
+    }
+
+    public function dependentPaths(): HasMany
+    {
+        return $this->hasMany(self::class, 'unlocks_after_path_id');
+    }
+
+    public function studentProgress(): HasMany
+    {
+        return $this->hasMany(StudentPathProgress::class);
     }
 }

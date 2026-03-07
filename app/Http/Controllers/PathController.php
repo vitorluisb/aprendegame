@@ -6,6 +6,7 @@ use App\Domain\Accounts\Enums\UserRole;
 use App\Domain\Accounts\Models\Student;
 use App\Domain\Content\Models\Path;
 use App\Domain\Content\Services\PathProgressService;
+use App\Domain\Content\Services\StudentPathProgressService;
 use App\Domain\Gameplay\Models\LessonRun;
 use App\Models\User;
 use Inertia\Inertia;
@@ -13,7 +14,10 @@ use Inertia\Response;
 
 class PathController extends Controller
 {
-    public function __construct(private readonly PathProgressService $pathProgressService) {}
+    public function __construct(
+        private readonly PathProgressService $pathProgressService,
+        private readonly StudentPathProgressService $studentPathProgressService
+    ) {}
 
     public function index(): Response
     {
@@ -114,12 +118,16 @@ class PathController extends Controller
                         ? $this->pathProgressService->getNodeStatus($node, $student)
                         : 'unlocked');
                 $isBoss = $node->order === $totalNodes || $node->node_type === 'boss';
-                $xpTotal = match (true) {
-                    $isBoss => 120,
-                    $node->node_type === 'review' => 100,
-                    $node->order === 1 => 80,
-                    default => 100,
-                };
+                $xpTotal = (int) ($node->xp_reward ?? 0);
+
+                if ($xpTotal <= 0) {
+                    $xpTotal = match (true) {
+                        $isBoss => 120,
+                        $node->node_type === 'review' => 100,
+                        $node->order === 1 => 80,
+                        default => 100,
+                    };
+                }
 
                 $xpEarned = $isCompleted
                     ? $xpTotal
@@ -148,9 +156,16 @@ class PathController extends Controller
             })
             ->values();
 
-        $totalXp = $nodes->sum('xp_total');
-        $earnedXp = $nodes->sum('xp_earned');
+        $totalXp = (int) $nodes->sum('xp_total');
+        $earnedXp = (int) $nodes->sum('xp_earned');
         $currentNodeOrder = (int) ($nodes->firstWhere('status', 'unlocked')['order'] ?? $totalNodes);
+
+        if ($student instanceof Student) {
+            $pathProgress = $this->studentPathProgressService->sync($path, $student);
+            $totalXp = $pathProgress->xp_total;
+            $earnedXp = $pathProgress->xp_earned;
+            $currentNodeOrder = $pathProgress->current_node_order;
+        }
 
         return Inertia::render('Paths/Show', [
             'path' => [

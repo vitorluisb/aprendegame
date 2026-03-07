@@ -21,7 +21,8 @@ class PathNodeFactory extends Factory
             'path_id' => $path->id,
             'order' => fake()->unique()->numberBetween(1, 1000),
             'title' => fake()->words(3, true),
-            'node_type' => fake()->randomElement(['lesson', 'boss']),
+            'node_type' => fake()->randomElement(['lesson', 'review', 'bonus', 'boss']),
+            'xp_reward' => fake()->numberBetween(80, 140),
             'skill_ids' => [],
             'published' => false,
         ];

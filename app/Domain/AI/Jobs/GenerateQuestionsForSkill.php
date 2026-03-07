@@ -5,6 +5,7 @@ namespace App\Domain\AI\Jobs;
 use App\Domain\AI\Models\AiJob;
 use App\Domain\AI\Services\AIService;
 use App\Domain\Content\Models\BnccSkill;
+use App\Domain\Gameplay\Models\Lesson;
 use App\Domain\Gameplay\Models\Question;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -21,7 +22,7 @@ class GenerateQuestionsForSkill implements ShouldQueue
     public function __construct(
         private readonly int $skillId,
         private readonly int $count = 10,
-        private readonly string $model = 'claude-sonnet-4-6',
+        private readonly string $model = AIService::DEFAULT_MODEL,
         private readonly ?int $aiJobId = null,
     ) {
         $this->onQueue('ai');
@@ -37,6 +38,7 @@ class GenerateQuestionsForSkill implements ShouldQueue
         $requestedCount = max(1, min(50, $this->count));
         $skill = BnccSkill::with(['grade', 'subject'])->findOrFail($this->skillId);
         $aiJob = $this->resolveAiJob($requestedCount);
+        $lessonOrders = $this->resolveLessonOrdersForSkill();
 
         try {
             $questions = $ai->generateQuestions($skill, $requestedCount, $this->model);
@@ -44,7 +46,7 @@ class GenerateQuestionsForSkill implements ShouldQueue
             foreach ($questions as $q) {
                 $payload = $this->normalizeQuestionPayload($q);
 
-                Question::create([
+                $question = Question::create([
                     'skill_id' => $this->skillId,
                     'type' => $payload['type'],
                     'difficulty' => $payload['difficulty'],
@@ -55,6 +57,8 @@ class GenerateQuestionsForSkill implements ShouldQueue
                     'status' => 'draft',
                     'ai_generated' => true,
                 ]);
+
+                $this->attachQuestionToLesson($question, $lessonOrders);
             }
 
             $aiJob->update([
@@ -72,6 +76,58 @@ class GenerateQuestionsForSkill implements ShouldQueue
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function resolveLessonOrdersForSkill(): array
+    {
+        $lessons = Lesson::query()
+            ->where('published', true)
+            ->whereHas('node', function ($nodeQuery): void {
+                $nodeQuery
+                    ->where('published', true)
+                    ->whereJsonContains('skill_ids', $this->skillId);
+            })
+            ->get(['id']);
+
+        $orders = [];
+
+        foreach ($lessons as $lesson) {
+            $orders[$lesson->id] = (int) ($lesson->questions()->max('lesson_questions.order') ?? 0);
+        }
+
+        return $orders;
+    }
+
+    /**
+     * @param  array<int, int>  $lessonOrders
+     */
+    private function attachQuestionToLesson(Question $question, array &$lessonOrders): void
+    {
+        if ($lessonOrders === []) {
+            return;
+        }
+
+        $targetLessonId = null;
+        $lowestOrder = PHP_INT_MAX;
+
+        foreach ($lessonOrders as $lessonId => $currentOrder) {
+            if ($currentOrder < $lowestOrder) {
+                $lowestOrder = $currentOrder;
+                $targetLessonId = $lessonId;
+            }
+        }
+
+        if (! $targetLessonId) {
+            return;
+        }
+
+        $nextOrder = $lessonOrders[$targetLessonId] + 1;
+
+        $question->lessons()->attach($targetLessonId, ['order' => $nextOrder]);
+        $lessonOrders[$targetLessonId] = $nextOrder;
     }
 
     private function resolveAiJob(int $requestedCount): AiJob

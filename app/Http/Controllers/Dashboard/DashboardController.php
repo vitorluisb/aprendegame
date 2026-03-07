@@ -114,6 +114,7 @@ class DashboardController extends Controller
                 'lives_current' => $student->lives_current,
                 'lives_max' => $student->lives_max,
                 'due_reviews_count' => $dueReviews->count(),
+                'total_gems' => $student->totalGems(),
                 'due_reviews' => $dueReviews->map(fn ($m) => [
                     'skill_code' => $m->skill?->code,
                     'skill_description' => $m->skill?->description,

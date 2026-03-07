@@ -97,6 +97,14 @@ it('teacher dashboard does not show active students as at-risk', function () {
 
 it('student dashboard loads successfully', function () {
     $user = User::factory()->create(['role' => 'student']);
+    $student = Student::factory()->create([
+        'user_id' => $user->id,
+        'name' => $user->name,
+    ]);
+    GemTransaction::factory()->create([
+        'student_id' => $student->id,
+        'amount' => 25,
+    ]);
 
     $this->actingAs($user)
         ->get('/dashboard')
@@ -105,6 +113,7 @@ it('student dashboard loads successfully', function () {
             ->where('role', 'student')
             ->has('student')
             ->where('student.name', $user->name)
+            ->where('student.total_gems', 25)
         );
 });
 

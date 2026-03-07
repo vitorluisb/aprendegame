@@ -3,6 +3,7 @@
 use App\Domain\Accounts\Models\Student;
 use App\Domain\Content\Models\Path;
 use App\Domain\Content\Models\PathNode;
+use App\Domain\Content\Models\StudentPathProgress;
 use App\Domain\Gameplay\Models\Lesson;
 use App\Domain\Gameplay\Models\LessonRun;
 use App\Models\User;
@@ -196,5 +197,50 @@ it('trilhas are filtered by grade when user has student profile even with non-st
             ->has('paths', 1)
             ->where('paths.0.id', $matchingPath->id)
             ->where('grade_filter', $matchingPath->grade_id)
+        );
+});
+
+it('path show keeps all nodes locked when path prerequisite is not completed', function () {
+    $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
+    Student::factory()->create(['user_id' => $user->id, 'school_id' => null]);
+
+    $requiredPath = Path::factory()->published()->create();
+    $lockedPath = Path::factory()->published()->create(['unlocks_after_path_id' => $requiredPath->id]);
+    $node = PathNode::factory()->forPath($lockedPath)->create(['order' => 1, 'published' => true]);
+    Lesson::factory()->published()->forNode($node)->create();
+
+    $this->actingAs($user)
+        ->get("/trilhas/{$lockedPath->id}")
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('nodes.0.status', 'locked')
+            ->where('path.current_node_order', 1)
+        );
+});
+
+it('path show unlocks nodes when prerequisite path progress is completed', function () {
+    $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
+    $student = Student::factory()->create(['user_id' => $user->id, 'school_id' => null]);
+
+    $requiredPath = Path::factory()->published()->create();
+    StudentPathProgress::query()->create([
+        'student_id' => $student->id,
+        'path_id' => $requiredPath->id,
+        'status' => 'completed',
+        'current_node_order' => 1,
+        'xp_earned' => 100,
+        'xp_total' => 100,
+        'stars' => 3,
+        'accuracy_percent' => 100,
+        'attempts_count' => 10,
+    ]);
+
+    $path = Path::factory()->published()->create(['unlocks_after_path_id' => $requiredPath->id]);
+    $node = PathNode::factory()->forPath($path)->create(['order' => 1, 'published' => true]);
+    Lesson::factory()->published()->forNode($node)->create();
+
+    $this->actingAs($user)
+        ->get("/trilhas/{$path->id}")
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('nodes.0.status', 'unlocked')
         );
 });

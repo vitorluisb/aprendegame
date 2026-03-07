@@ -17,8 +17,11 @@ class Lesson extends Model
     protected $fillable = [
         'node_id',
         'title',
+        'lesson_type',
+        'order',
         'interaction_count',
         'difficulty',
+        'xp_reward',
         'published',
     ];
 
@@ -28,6 +31,8 @@ class Lesson extends Model
             'published' => 'boolean',
             'interaction_count' => 'integer',
             'difficulty' => 'integer',
+            'order' => 'integer',
+            'xp_reward' => 'integer',
         ];
     }
 

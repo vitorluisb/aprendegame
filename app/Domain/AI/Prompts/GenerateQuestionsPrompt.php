@@ -10,10 +10,19 @@ class GenerateQuestionsPrompt
     {
         $grade = $skill->grade->name;
         $ageRange = match ($skill->grade->stage) {
+            'fundamental_1' => '8–10 anos',
+            'fundamental_2' => '11–14 anos',
             'fundamental' => $skill->grade->order <= 5 ? '8–10 anos' : '11–14 anos',
             'medio' => '15–18 anos',
             default => '10–16 anos',
         };
+        $isEarlyFundamental = self::isEarlyFundamental($skill);
+        $difficultyDistribution = $isEarlyFundamental
+            ? '70% fácil (1-2), 25% médio (3), 5% desafiador (4)'
+            : '30% fácil (1-2), 50% médio (3), 20% difícil (4-5)';
+        $extraRules = $isEarlyFundamental
+            ? "6. Enunciado curto: até 12 palavras\n7. Alternativas curtas: até 5 palavras\n8. Vocabulário simples e contexto infantil do dia a dia\n9. Evite negativas confusas (ex.: \"NÃO é\")"
+            : '6. Equilíbrio entre raciocínio, interpretação e aplicação prática';
 
         return <<<PROMPT
         Você é um especialista em educação brasileira e BNCC.
@@ -29,10 +38,21 @@ class GenerateQuestionsPrompt
         2. Sem pegadinhas ou ambiguidade
         3. 4 alternativas (A, B, C, D)
         4. Explicação clara do erro em 1–2 frases
-        5. Dificuldade variada: 30% fácil (1-2), 50% médio (3), 20% difícil (4-5)
+        5. Dificuldade variada: {$difficultyDistribution}
+        {$extraRules}
 
         Responda APENAS em JSON válido no formato:
         [{"type":"multiple_choice","difficulty":2,"prompt":"...","options":{"A":"...","B":"...","C":"...","D":"..."},"correct_answer":"A","explanation":"..."}]
         PROMPT;
+    }
+
+    private static function isEarlyFundamental(BnccSkill $skill): bool
+    {
+        if (in_array($skill->grade->code, ['EF03', 'EF04', 'EF05'], true)) {
+            return true;
+        }
+
+        return $skill->grade->stage === 'fundamental_1'
+            || ($skill->grade->stage === 'fundamental' && $skill->grade->order <= 3);
     }
 }
