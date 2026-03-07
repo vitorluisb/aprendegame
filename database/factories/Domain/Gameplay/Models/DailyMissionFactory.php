@@ -17,7 +17,7 @@ class DailyMissionFactory extends Factory
             'description' => fake()->sentence(),
             'type' => fake()->randomElement(['study', 'streak', 'xp', 'perfect_lesson']),
             'target_value' => fake()->numberBetween(1, 10),
-            'xp_reward' => fake()->randomElement([10, 20, 30]),
+            'xp_reward' => fake()->randomElement([5, 10, 15]),
             'active' => true,
         ];
     }

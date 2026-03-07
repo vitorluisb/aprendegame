@@ -3,6 +3,7 @@
 namespace App\Domain\AI\Services;
 
 use App\Domain\AI\Prompts\GenerateQuestionsPrompt;
+use App\Domain\AI\Prompts\GenerateQuizMestreQuestionsPrompt;
 use App\Domain\Content\Models\BnccSkill;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -30,13 +31,62 @@ class AIService
      */
     public function generateQuestions(BnccSkill $skill, int $count, string $model): array
     {
+        $this->ensureEnabled();
+
         if (blank($this->key) && ! app()->environment('testing')) {
             throw new RuntimeException('AI API key não configurada.');
         }
 
         $prompt = GenerateQuestionsPrompt::build($skill, $count);
         $resolvedModel = $this->normalizeModel($model);
+        $text = $this->requestAiResponseText($prompt, $resolvedModel);
+        $questions = $this->decodeQuestions($text);
 
+        if (! is_array($questions)) {
+            throw new RuntimeException('AI response is not valid JSON array');
+        }
+
+        return $questions;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function generateQuizMestreQuestions(string $categoryName, string $difficulty, int $count, string $model): array
+    {
+        $this->ensureEnabled();
+
+        if (blank($this->key) && ! app()->environment('testing')) {
+            throw new RuntimeException('AI API key não configurada.');
+        }
+
+        $prompt = GenerateQuizMestreQuestionsPrompt::build($categoryName, $difficulty, $count);
+        $resolvedModel = $this->normalizeModel($model);
+        $text = $this->requestAiResponseText($prompt, $resolvedModel);
+        $questions = $this->decodeQuestions($text);
+
+        if (! is_array($questions)) {
+            throw new RuntimeException('AI response is not valid JSON array');
+        }
+
+        return $questions;
+    }
+
+    public function requestRawJsonResponse(string $prompt, string $model): string
+    {
+        $this->ensureEnabled();
+
+        if (blank($this->key) && ! app()->environment('testing')) {
+            throw new RuntimeException('AI API key não configurada.');
+        }
+
+        $resolvedModel = $this->normalizeModel($model);
+
+        return $this->requestAiResponseText($prompt, $resolvedModel);
+    }
+
+    private function requestAiResponseText(string $prompt, string $resolvedModel): string
+    {
         $client = Http::connectTimeout(10)
             ->timeout(45)
             ->retry(3, 1000);
@@ -90,13 +140,14 @@ class AIService
             $text = (string) ($body['content'][0]['text'] ?? '');
         }
 
-        $questions = $this->decodeQuestions($text);
+        return $text;
+    }
 
-        if (! is_array($questions)) {
-            throw new RuntimeException('AI response is not valid JSON array');
+    private function ensureEnabled(): void
+    {
+        if (! (bool) config('services.ai.enabled', true)) {
+            throw new RuntimeException('IA desativada no ambiente (AI_ENABLED=false).');
         }
-
-        return $questions;
     }
 
     private function isOpenRouter(): bool

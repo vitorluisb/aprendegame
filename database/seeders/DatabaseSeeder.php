@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Database\Seeders\Gameplay\StudentNeuronsSeeder;
+use Database\Seeders\Gameplay\SudokuPuzzleSeeder;
 use Database\Seeders\Gameplay\TrailContentSeeder;
 use Illuminate\Database\Seeder;
 
@@ -21,6 +22,7 @@ class DatabaseSeeder extends Seeder
             StudentGuardianSeeder::class,
             TrailContentSeeder::class,
             StudentNeuronsSeeder::class,
+            SudokuPuzzleSeeder::class,
         ]);
     }
 }

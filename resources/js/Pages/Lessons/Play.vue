@@ -53,11 +53,10 @@ const questionOptions = computed(() => {
         return [];
     }
 
-    if (question.value.type === 'true_false') {
-        return ['Verdadeiro', 'Falso'];
-    }
-
-    return question.value.options ?? [];
+    return (question.value.options ?? []).map((option, index) => ({
+        key: String(option.key ?? optionTag(index)),
+        text: String(option.text ?? ''),
+    }));
 });
 
 const canSubmit = computed(() => {
@@ -77,7 +76,7 @@ function pickOption(option) {
         return;
     }
 
-    selectedAnswer.value = option;
+    selectedAnswer.value = option.key;
     pop();
 }
 
@@ -171,16 +170,16 @@ async function finishLesson() {
 
 function optionClass(option) {
     if (phase.value === 'playing') {
-        return selectedAnswer.value === option
+        return selectedAnswer.value === option.key
             ? 'ring-2 ring-amber-500 border-amber-400 bg-amber-50 text-amber-900'
             : 'border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:bg-amber-50/40';
     }
 
-    if (option === feedback.value?.correct_answer) {
+    if (option.key === feedback.value?.correct_answer) {
         return 'ring-2 ring-emerald-500 border-emerald-400 bg-emerald-50 text-emerald-900';
     }
 
-    if (option === selectedAnswer.value && !feedback.value?.correct) {
+    if (option.key === selectedAnswer.value && !feedback.value?.correct) {
         return 'ring-2 ring-rose-500 border-rose-400 bg-rose-50 text-rose-900';
     }
 
@@ -310,16 +309,16 @@ onBeforeUnmount(() => {
                     <template v-if="question.type === 'multiple_choice' || question.type === 'true_false'">
                         <button
                             v-for="(option, index) in questionOptions"
-                            :key="option"
+                            :key="option.key"
                             class="option-card flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left transition"
                             :class="optionClass(option)"
                             :disabled="phase === 'feedback'"
                             @click="pickOption(option)"
                         >
                             <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-current text-xs font-black">
-                                {{ optionTag(index) }}
+                                {{ option.key || optionTag(index) }}
                             </span>
-                            <span class="text-sm font-semibold">{{ option }}</span>
+                            <span class="text-sm font-semibold">{{ option.text }}</span>
                         </button>
                     </template>
 
@@ -361,7 +360,7 @@ onBeforeUnmount(() => {
                             {{ feedback.correct ? 'Correto!' : 'Incorreto' }}
                         </p>
                         <p v-if="!feedback.correct" class="mt-1 text-sm font-semibold text-rose-700">
-                            Resposta correta: <strong>{{ feedback.correct_answer }}</strong>
+                            Resposta correta: <strong>{{ questionOptions.find((option) => option.key === feedback.correct_answer)?.text ?? feedback.correct_answer }}</strong>
                         </p>
                         <p v-if="feedback.explanation" class="mt-2 text-sm text-slate-700">
                             {{ feedback.explanation }}

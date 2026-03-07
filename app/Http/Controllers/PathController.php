@@ -9,6 +9,7 @@ use App\Domain\Content\Services\PathProgressService;
 use App\Domain\Content\Services\StudentPathProgressService;
 use App\Domain\Gameplay\Models\LessonRun;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -33,9 +34,9 @@ class PathController extends Controller
 
         $pathsQuery = Path::query()
             ->where('published', true)
-            ->whereIn('path_type', Path::TYPES)
+            ->where('path_type', 'regular')
             ->with(['grade', 'subject'])
-            ->orderBy('path_type');
+            ->orderBy('id');
 
         if ($student?->grade_id) {
             $pathsQuery->where('grade_id', $student->grade_id);
@@ -59,9 +60,13 @@ class PathController extends Controller
         ]);
     }
 
-    public function show(Path $path): Response
+    public function show(Path $path): Response|RedirectResponse
     {
         abort_unless($path->published, 404);
+
+        if ($path->path_type === 'enem') {
+            return redirect()->route('enem.index');
+        }
 
         $path->load(['grade', 'subject']);
 
@@ -122,10 +127,10 @@ class PathController extends Controller
 
                 if ($xpTotal <= 0) {
                     $xpTotal = match (true) {
-                        $isBoss => 120,
-                        $node->node_type === 'review' => 100,
-                        $node->order === 1 => 80,
-                        default => 100,
+                        $isBoss => 60,
+                        $node->node_type === 'review' => 45,
+                        $node->order === 1 => 35,
+                        default => 40,
                     };
                 }
 

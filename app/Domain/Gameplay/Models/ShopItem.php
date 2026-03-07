@@ -80,6 +80,44 @@ class ShopItem extends Model
         return array_values(array_unique([$normalized, ...$aliases]));
     }
 
+    public static function normalizeAvatarImageUrl(?string $imageUrl): ?string
+    {
+        if (! $imageUrl) {
+            return null;
+        }
+
+        if (str_starts_with($imageUrl, '/storage/shop-avatars/')) {
+            return '/media/shop-avatars/'.basename($imageUrl);
+        }
+
+        if (str_starts_with($imageUrl, 'shop-avatars/')) {
+            return '/media/'.$imageUrl;
+        }
+
+        return $imageUrl;
+    }
+
+    public static function extractAvatarStoragePath(?string $imageUrl): ?string
+    {
+        if (! $imageUrl) {
+            return null;
+        }
+
+        if (str_starts_with($imageUrl, '/storage/shop-avatars/')) {
+            return str_replace('/storage/', '', $imageUrl);
+        }
+
+        if (str_starts_with($imageUrl, '/media/shop-avatars/')) {
+            return str_replace('/media/', '', $imageUrl);
+        }
+
+        if (str_starts_with($imageUrl, 'shop-avatars/')) {
+            return $imageUrl;
+        }
+
+        return null;
+    }
+
     public function studentItems(): HasMany
     {
         return $this->hasMany(StudentItem::class, 'item_id');

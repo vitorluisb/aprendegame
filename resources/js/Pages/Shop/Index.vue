@@ -34,6 +34,14 @@ function typeLabel(type) {
 
     return map[type] ?? type;
 }
+
+function isMp4Avatar(url) {
+    if (!url) {
+        return false;
+    }
+
+    return /\.mp4(?:$|[?#])/i.test(url);
+}
 </script>
 
 <template>
@@ -107,7 +115,16 @@ function typeLabel(type) {
                             v-if="item.type === 'avatar'"
                             class="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100"
                         >
-                            <img v-if="item.image_url" :src="item.image_url" :alt="`Avatar ${item.name}`" class="h-full w-full object-cover">
+                            <video
+                                v-if="item.image_url && isMp4Avatar(item.image_url)"
+                                :src="item.image_url"
+                                class="h-full w-full object-cover"
+                                autoplay
+                                loop
+                                muted
+                                playsinline
+                            />
+                            <img v-else-if="item.image_url" :src="item.image_url" :alt="`Avatar ${item.name}`" class="h-full w-full object-cover">
                             <div v-else class="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300 text-slate-600">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 12a4 4 0 100-8 4 4 0 000 8zm0 2c-3.314 0-6 2.238-6 5h12c0-2.762-2.686-5-6-5z" />

@@ -43,7 +43,7 @@ class PathNodeForm
                             ->integer()
                             ->required()
                             ->minValue(0)
-                            ->default(100),
+                            ->default(40),
 
                         Select::make('node_type')
                             ->label('Tipo da Missão')

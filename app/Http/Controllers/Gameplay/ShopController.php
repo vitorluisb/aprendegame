@@ -11,9 +11,11 @@ use App\Http\Requests\EquipShopItemRequest;
 use App\Http\Requests\PurchaseShopItemRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ShopController extends Controller
 {
@@ -61,7 +63,9 @@ class ShopController extends Controller
                 'type' => $normalizedType,
                 'slug' => $item->slug,
                 'description' => $item->description,
-                'image_url' => $item->image_url,
+                'image_url' => $normalizedType === ShopItem::TYPE_AVATAR
+                    ? ShopItem::normalizeAvatarImageUrl($item->image_url)
+                    : $item->image_url,
                 'gem_price' => $item->gem_price,
                 'is_owned' => $isOwned,
                 'is_equipped' => $isEquipped,
@@ -132,5 +136,17 @@ class ShopController extends Controller
         }
 
         return back();
+    }
+
+    public function avatar(string $filename): BinaryFileResponse
+    {
+        $path = 'shop-avatars/'.$filename;
+
+        abort_unless(Storage::disk('public')->exists($path), 404);
+
+        return response()->file(
+            Storage::disk('public')->path($path),
+            ['Cache-Control' => 'public, max-age=86400']
+        );
     }
 }

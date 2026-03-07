@@ -39,6 +39,7 @@ class TrailContentSeeder extends Seeder
                 $missionCount = $this->resolveMissionCount($path);
 
                 foreach (range(1, $missionCount) as $order) {
+                    $isBossMission = $order === $missionCount;
                     $node = PathNode::query()->updateOrCreate(
                         [
                             'path_id' => $path->id,
@@ -46,7 +47,8 @@ class TrailContentSeeder extends Seeder
                         ],
                         [
                             'title' => "Missão {$order} - {$path->subject->name}",
-                            'node_type' => $order === $missionCount ? 'boss' : 'lesson',
+                            'node_type' => $isBossMission ? 'boss' : 'lesson',
+                            'xp_reward' => $isBossMission ? 60 : 40,
                             'skill_ids' => $skillIds->take(3)->values()->all(),
                             'published' => true,
                         ]
@@ -60,6 +62,7 @@ class TrailContentSeeder extends Seeder
                             'title' => "Aula {$order} - {$path->subject->name}",
                             'interaction_count' => 10,
                             'difficulty' => min(5, $order + 1),
+                            'xp_reward' => $isBossMission ? 60 : 40,
                             'published' => true,
                         ]
                     );

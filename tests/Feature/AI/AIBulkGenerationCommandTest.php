@@ -8,6 +8,10 @@ use App\Domain\Content\Models\Grade;
 use App\Domain\Content\Models\Subject;
 use Illuminate\Support\Facades\Queue;
 
+beforeEach(function () {
+    config()->set('services.ai.enabled', true);
+});
+
 it('dispatches bulk generation jobs with batch tracking', function () {
     Queue::fake();
 
@@ -40,6 +44,16 @@ it('returns failure when no skills match bulk generation filters', function () {
     $this->artisan(GenerateQuestionsBulkCommand::class, [
         '--grade' => 'EF99',
     ])->assertFailed();
+
+    Queue::assertNothingPushed();
+    expect(AiJob::query()->count())->toBe(0);
+});
+
+it('does not dispatch bulk generation when ai is disabled', function () {
+    Queue::fake();
+    config()->set('services.ai.enabled', false);
+
+    $this->artisan(GenerateQuestionsBulkCommand::class)->assertFailed();
 
     Queue::assertNothingPushed();
     expect(AiJob::query()->count())->toBe(0);

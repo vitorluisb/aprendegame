@@ -6,12 +6,16 @@ use App\Http\Controllers\ClassController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\StudentProfileController;
 use App\Http\Controllers\Dashboard\TeacherDashboardController;
+use App\Http\Controllers\Enem\EnemPracticeController;
 use App\Http\Controllers\Gameplay\LeagueController;
 use App\Http\Controllers\Gameplay\ShopController;
 use App\Http\Controllers\Guardian\GuardianController;
 use App\Http\Controllers\Guardian\GuardianStudentController;
 use App\Http\Controllers\Guardian\GuardianStudentCreateController;
 use App\Http\Controllers\Guardian\GuardianTutorController;
+use App\Http\Controllers\Jogos\JogosController;
+use App\Http\Controllers\Jogos\QuizMestreController;
+use App\Http\Controllers\Jogos\SudokuController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\PathController;
 use App\Http\Controllers\PushSubscriptionController;
@@ -67,6 +71,9 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/media/student-avatars/{filename}', [StudentProfileController::class, 'avatar'])
         ->where('filename', '[A-Za-z0-9._-]+')
         ->name('profile.avatar');
+    Route::get('/media/shop-avatars/{filename}', [ShopController::class, 'avatar'])
+        ->where('filename', '[A-Za-z0-9._-]+')
+        ->name('shop.avatar');
     Route::get('/ranking', [LeagueController::class, 'index'])->name('league.index');
     Route::get('/loja', [ShopController::class, 'index'])->name('shop.index');
     Route::post('/loja/comprar', [ShopController::class, 'purchase'])->name('shop.purchase');
@@ -74,6 +81,22 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::post('/loja/vidas/comprar', [ShopController::class, 'buyLife'])->name('shop.buy-life');
     Route::get('/tutor', [TutorChatController::class, 'index'])->name('tutor.index');
     Route::post('/tutor/mensagens', [TutorChatController::class, 'store'])->name('tutor.store');
+    Route::get('/enem', [EnemPracticeController::class, 'index'])->name('enem.index');
+    Route::post('/enem/iniciar', [EnemPracticeController::class, 'start'])->name('enem.start');
+    Route::get('/enem/questoes/{question}', [EnemPracticeController::class, 'play'])->name('enem.play');
+    Route::post('/enem/questoes/{question}/responder', [EnemPracticeController::class, 'answer'])->name('enem.answer');
+    Route::get('/jogos', [JogosController::class, 'index'])->name('jogos.index');
+    Route::get('/jogos/quiz-mestre', [QuizMestreController::class, 'lobby'])->name('quiz-mestre.lobby');
+    Route::post('/jogos/quiz-mestre/sessoes', [QuizMestreController::class, 'start'])->name('quiz-mestre.start');
+    Route::get('/jogos/quiz-mestre/sessoes/{session}', [QuizMestreController::class, 'play'])->name('quiz-mestre.play');
+    Route::post('/jogos/quiz-mestre/sessoes/{session}/responder', [QuizMestreController::class, 'submit'])->name('quiz-mestre.submit');
+    Route::get('/jogos/quiz-mestre/sessoes/{session}/resultado', [QuizMestreController::class, 'result'])->name('quiz-mestre.result');
+    Route::get('/jogos/sudoku', [SudokuController::class, 'lobby'])->name('sudoku.lobby');
+    Route::get('/jogos/sudoku/dificuldade', [SudokuController::class, 'difficulty'])->name('sudoku.difficulty');
+    Route::post('/jogos/sudoku/sessoes', [SudokuController::class, 'start'])->name('sudoku.start');
+    Route::get('/jogos/sudoku/sessoes/{session}', [SudokuController::class, 'play'])->name('sudoku.play');
+    Route::post('/jogos/sudoku/sessoes/{session}/movimentos', [SudokuController::class, 'submitMove'])->name('sudoku.move');
+    Route::get('/jogos/sudoku/sessoes/{session}/resultado', [SudokuController::class, 'result'])->name('sudoku.result');
     Route::get('/teacher/dashboard', [TeacherDashboardController::class, 'index'])->name('teacher.dashboard');
 
     Route::middleware('role:teacher,school_admin,super_admin')->group(function (): void {

@@ -30,10 +30,12 @@ class MasteryService
             $consecutive = $mastery->consecutive_correct + 1;
             $newScore = min(100, $mastery->mastery_score + 10);
             $newInterval = $this->nextInterval($mastery->interval_days, $consecutive);
+            $nextReviewAt = now()->addDays($newInterval);
         } else {
             $consecutive = 0;
             $newScore = max(0, $mastery->mastery_score - 15);
             $newInterval = 1; // voltar ao início
+            $nextReviewAt = now(); // revisão imediata quando erra
         }
 
         $mastery->update([
@@ -41,7 +43,7 @@ class MasteryService
             'consecutive_correct' => $consecutive,
             'interval_days' => $newInterval,
             'last_seen_at' => now(),
-            'next_review_at' => now()->addDays($newInterval),
+            'next_review_at' => $nextReviewAt,
         ]);
 
         return $mastery->refresh();

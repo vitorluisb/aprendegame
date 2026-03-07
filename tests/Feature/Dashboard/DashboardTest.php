@@ -137,6 +137,31 @@ it('student dashboard refills one life per hour elapsed', function () {
     expect($student->fresh()->lives_current)->toBe(4);
 });
 
+it('student dashboard supports equipped mp4 avatar from shop item', function () {
+    $user = User::factory()->create(['role' => 'student']);
+    $student = Student::factory()->create([
+        'user_id' => $user->id,
+        'name' => $user->name,
+    ]);
+
+    $avatarItem = ShopItem::factory()->avatar()->create([
+        'image_url' => '/storage/shop-avatars/avatar-animado.mp4',
+        'active' => true,
+    ]);
+
+    StudentItem::factory()->equipped()->create([
+        'student_id' => $student->id,
+        'item_id' => $avatarItem->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/dashboard')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('student.avatar_url', '/media/shop-avatars/avatar-animado.mp4')
+        );
+});
+
 it('student dashboard shows latest completed lesson activity and xp', function () {
     $path = Path::factory()->published()->create(['title' => 'Trilha de Matemática']);
     $node = PathNode::factory()->forPath($path)->create(['title' => 'Frações']);
@@ -281,7 +306,7 @@ it('student can access profile page', function () {
             ->where('student.total_gems', 120)
             ->where('student.badges_count', 1)
             ->where('student.inventory_count', 1)
-            ->where('student.avatar_url', '/storage/shop-avatars/item-1.png')
+            ->where('student.avatar_url', '/media/shop-avatars/item-1.png')
             ->where('student.badges.0.badge.name', 'Conquista 1')
             ->where('student.inventory.0.item.name', 'Item 1')
             ->where('student.inventory.0.equipped', true)

@@ -65,6 +65,19 @@ it('fill_blank answer is case insensitive', function () {
     expect($attempt->correct)->toBeTrue();
 });
 
+it('accepts true_false answers using true or falso labels', function () {
+    Queue::fake();
+    $run = LessonRun::factory()->create();
+    $question = Question::factory()->trueFalse()->create([
+        'correct_answer' => 'true',
+    ]);
+    $service = app(LessonService::class);
+
+    $attempt = $service->answer($run, $question, 'Verdadeiro', 3000);
+
+    expect($attempt->correct)->toBeTrue();
+});
+
 it('calculates score correctly', function () {
     Queue::fake();
     $run = LessonRun::factory()->create();
@@ -108,6 +121,54 @@ it('persists xp streak and mastery immediately after lesson completion', functio
             ->where('skill_id', $skill->id)
             ->exists()
     )->toBeTrue();
+});
+
+it('reduces mastery when student performance is weak for the node skill', function () {
+    $path = Path::factory()->create();
+    $skill = BnccSkill::factory()->create([
+        'grade_id' => $path->grade_id,
+        'subject_id' => $path->subject_id,
+    ]);
+    $node = PathNode::factory()->forPath($path)->create(['skill_ids' => [$skill->id]]);
+    $lesson = Lesson::factory()->forNode($node)->create();
+    $run = LessonRun::factory()->create(['lesson_id' => $lesson->id]);
+
+    $question = Question::factory()->multipleChoice()->create([
+        'skill_id' => $skill->id,
+        'correct_answer' => 'A',
+    ]);
+
+    Mastery::factory()->create([
+        'student_id' => $run->student_id,
+        'skill_id' => $skill->id,
+        'mastery_score' => 50,
+        'interval_days' => 7,
+        'consecutive_correct' => 3,
+    ]);
+
+    Attempt::factory()->create([
+        'run_id' => $run->id,
+        'student_id' => $run->student_id,
+        'question_id' => $question->id,
+        'correct' => true,
+    ]);
+    Attempt::factory()->count(4)->create([
+        'run_id' => $run->id,
+        'student_id' => $run->student_id,
+        'question_id' => $question->id,
+        'correct' => false,
+    ]);
+
+    $service = app(LessonService::class);
+    $service->finish($run);
+
+    $mastery = Mastery::query()
+        ->where('student_id', $run->student_id)
+        ->where('skill_id', $skill->id)
+        ->firstOrFail();
+
+    expect($mastery->mastery_score)->toBe(35);
+    expect($mastery->next_review_at?->lessThanOrEqualTo(now()))->toBeTrue();
 });
 
 it('xp earned is greater than zero', function () {
@@ -154,12 +215,12 @@ it('awards neurons when clearing a node for the first time', function () {
     $service = app(LessonService::class);
     $finished = $service->finish($run);
 
-    expect((int) $finished->neurons_earned)->toBe(8);
+    expect((int) $finished->neurons_earned)->toBe(3);
     expect(
         GemTransaction::query()
             ->where('student_id', $run->student_id)
             ->where('source', 'node_clear_bonus')
-            ->where('amount', 8)
+            ->where('amount', 3)
             ->exists()
     )->toBeTrue();
 });

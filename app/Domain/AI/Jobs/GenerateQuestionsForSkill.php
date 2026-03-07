@@ -36,8 +36,19 @@ class GenerateQuestionsForSkill implements ShouldQueue
     public function handle(AIService $ai): void
     {
         $requestedCount = max(1, min(50, $this->count));
-        $skill = BnccSkill::with(['grade', 'subject'])->findOrFail($this->skillId);
         $aiJob = $this->resolveAiJob($requestedCount);
+
+        if (! (bool) config('services.ai.enabled', true)) {
+            $aiJob->update([
+                'status' => 'failed',
+                'error' => 'IA desativada no ambiente (AI_ENABLED=false).',
+                'finished_at' => now(),
+            ]);
+
+            return;
+        }
+
+        $skill = BnccSkill::with(['grade', 'subject'])->findOrFail($this->skillId);
         $lessonOrders = $this->resolveLessonOrdersForSkill();
 
         try {

@@ -8,7 +8,6 @@ const props = defineProps({
 });
 
 const regularPaths = computed(() => props.paths.filter((p) => p.path_type === 'regular'));
-const enemPaths = computed(() => props.paths.filter((p) => p.path_type === 'enem'));
 
 function stageBadge(stage) {
     const map = {
@@ -39,11 +38,7 @@ function pathTypeCountLabel(count) {
                     <div class="mt-4 grid grid-cols-2 gap-2 text-center text-xs font-bold sm:max-w-md">
                         <div class="rounded-xl bg-white/10 px-2 py-2">
                             <p class="text-lg text-cyan-200">{{ regularPaths.length }}</p>
-                            <p class="text-white/80">Regular</p>
-                        </div>
-                        <div class="rounded-xl bg-white/10 px-2 py-2">
-                            <p class="text-lg text-cyan-200">{{ enemPaths.length }}</p>
-                            <p class="text-white/80">ENEM</p>
+                            <p class="text-white/80">Trilhas</p>
                         </div>
                     </div>
                 </div>
@@ -86,31 +81,6 @@ function pathTypeCountLabel(count) {
                                     <p class="mt-1 text-xs font-semibold text-sky-600">Toque para abrir o mapa →</p>
                                 </div>
                                 <div class="rounded-full bg-slate-100 px-2 py-1 text-xs font-black text-slate-500 transition group-hover:bg-slate-900 group-hover:text-white">IR</div>
-                            </div>
-                        </Link>
-                    </div>
-                </section>
-
-                <section v-if="enemPaths.length > 0" class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-sm font-black uppercase tracking-wider text-slate-600">ENEM</h3>
-                        <span class="text-xs font-semibold text-slate-400">{{ pathTypeCountLabel(enemPaths.length) }}</span>
-                    </div>
-
-                    <div class="grid gap-3">
-                        <Link
-                            v-for="path in enemPaths"
-                            :key="path.id"
-                            :href="`/trilhas/${path.id}`"
-                            class="trail-card group relative overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-fuchsia-50 px-4 py-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]"
-                        >
-                            <div class="flex items-center gap-3">
-                                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-lg font-black text-white">E</div>
-                                <div class="min-w-0 flex-1">
-                                    <p class="truncate text-sm font-black text-slate-800 sm:text-base">{{ path.title }}</p>
-                                    <p class="mt-1 text-xs font-semibold text-violet-600">{{ path.node_count }} missões · Toque para abrir →</p>
-                                </div>
-                                <div class="rounded-full bg-violet-600 px-2 py-1 text-xs font-black text-white">ENEM</div>
                             </div>
                         </Link>
                     </div>

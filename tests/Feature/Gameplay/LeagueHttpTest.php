@@ -184,6 +184,6 @@ it('ranking uses equipped shop avatar when available', function () {
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->where('entries.0.student.name', 'Avatar Gamer')
-            ->where('entries.0.student.avatar_url', '/storage/shop-avatars/avatar-gamer.png')
+            ->where('entries.0.student.avatar_url', '/media/shop-avatars/avatar-gamer.png')
         );
 });

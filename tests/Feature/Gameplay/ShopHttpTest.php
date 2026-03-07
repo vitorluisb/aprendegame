@@ -6,6 +6,7 @@ use App\Domain\Gameplay\Models\GemTransaction;
 use App\Domain\Gameplay\Models\ShopItem;
 use App\Domain\Gameplay\Models\StudentItem;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 it('student can view shop page with items and gems', function () {
@@ -42,6 +43,53 @@ it('student can view shop page with items and gems', function () {
             ->where('items.0.name', 'Avatar Azul')
             ->where('items.0.is_owned', false)
         );
+});
+
+it('shop keeps avatar image url generated from storage uploads', function () {
+    $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
+    Student::factory()->create(['user_id' => $user->id, 'school_id' => null]);
+
+    ShopItem::factory()->avatar()->create([
+        'active' => true,
+        'image_url' => '/storage/shop-avatars/avatar-upload.png',
+    ]);
+
+    $this->actingAs($user)
+        ->get('/loja')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('items.0.image_url', '/media/shop-avatars/avatar-upload.png')
+        );
+});
+
+it('shop keeps mp4 avatar url generated from storage uploads', function () {
+    $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
+    Student::factory()->create(['user_id' => $user->id, 'school_id' => null]);
+
+    ShopItem::factory()->avatar()->create([
+        'active' => true,
+        'image_url' => '/storage/shop-avatars/avatar-upload.mp4',
+    ]);
+
+    $this->actingAs($user)
+        ->get('/loja')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('items.0.image_url', '/media/shop-avatars/avatar-upload.mp4')
+        );
+});
+
+it('serves uploaded shop avatar through media route', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
+    Student::factory()->create(['user_id' => $user->id, 'school_id' => null]);
+
+    Storage::disk('public')->put('shop-avatars/avatar-upload.png', 'fake-image');
+
+    $this->actingAs($user)
+        ->get('/media/shop-avatars/avatar-upload.png')
+        ->assertSuccessful();
 });
 
 it('user with student profile can view shop page even with non-student role', function () {

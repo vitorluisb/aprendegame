@@ -22,7 +22,7 @@ class LessonFactory extends Factory
             'order' => fake()->numberBetween(1, 5),
             'interaction_count' => fake()->numberBetween(8, 12),
             'difficulty' => fake()->numberBetween(1, 5),
-            'xp_reward' => fake()->numberBetween(60, 140),
+            'xp_reward' => fake()->numberBetween(20, 60),
             'published' => false,
         ];
     }

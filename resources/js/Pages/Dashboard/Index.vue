@@ -62,10 +62,17 @@ function difficultyLabel(score) {
 function pathTypeLabel(type) {
     const map = {
         regular: 'Regular',
-        enem: 'ENEM',
     };
 
     return map[type] ?? type;
+}
+
+function isMp4Avatar(url) {
+    if (!url) {
+        return false;
+    }
+
+    return /\.mp4(?:$|[?#])/i.test(url);
 }
 </script>
 
@@ -80,8 +87,17 @@ function pathTypeLabel(type) {
                 <div class="game-shimmer pointer-events-none absolute inset-0 opacity-30" />
                 <div class="flex items-start justify-between gap-3">
                     <div class="flex items-center gap-3">
-                        <div class="h-12 w-12 overflow-hidden rounded-full border border-white/40 bg-white/20" :class="equippedFrameClass" :style="equippedFrameStyle">
-                            <img v-if="student.avatar_url" :src="student.avatar_url" alt="Avatar do aluno" class="h-full w-full object-cover">
+                        <div class="h-16 w-16 overflow-hidden rounded-full border border-white/40 bg-white/20" :class="equippedFrameClass" :style="equippedFrameStyle">
+                            <video
+                                v-if="student.avatar_url && isMp4Avatar(student.avatar_url)"
+                                :src="student.avatar_url"
+                                class="h-full w-full object-cover"
+                                autoplay
+                                loop
+                                muted
+                                playsinline
+                            />
+                            <img v-else-if="student.avatar_url" :src="student.avatar_url" alt="Avatar do aluno" class="h-full w-full object-cover">
                             <div v-else class="flex h-full w-full items-center justify-center text-lg font-bold text-white">
                                 {{ student.name?.[0] ?? '?' }}
                             </div>
@@ -210,6 +226,28 @@ function pathTypeLabel(type) {
                     <p class="text-xs font-semibold uppercase tracking-wide text-emerald-600">Tutor IA</p>
                     <p class="mt-1 text-sm font-bold text-slate-800">🤖 Tirar dúvidas rápidas</p>
                     <p class="mt-1 text-xs text-slate-500">Explicação instantânea · toque para abrir</p>
+                </Link>
+
+                <Link
+                    href="/jogos"
+                    class="relative rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-100 px-4 py-3 transition active:scale-[0.99] active:brightness-95"
+                    @click="pop"
+                >
+                    <div class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/80 text-sm font-black text-amber-700">→</div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-amber-600">Jogos</p>
+                    <p class="mt-1 text-sm font-bold text-slate-800">🕹️ Modos especiais</p>
+                    <p class="mt-1 text-xs text-slate-500">Acesse os jogos · toque para abrir</p>
+                </Link>
+
+                <Link
+                    href="/enem"
+                    class="relative rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-violet-100 px-4 py-3 transition active:scale-[0.99] active:brightness-95"
+                    @click="pop"
+                >
+                    <div class="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/80 text-sm font-black text-indigo-700">→</div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">ENEM</p>
+                    <p class="mt-1 text-sm font-bold text-slate-800">🎓 Questões contextualizadas</p>
+                    <p class="mt-1 text-xs text-slate-500">Treino separado do banco regular</p>
                 </Link>
             </section>
 

@@ -49,6 +49,16 @@ class CreateAiJob extends CreateRecord
             return;
         }
 
+        if (! (bool) config('services.ai.enabled', true)) {
+            $this->record->update([
+                'status' => 'failed',
+                'error' => 'IA desativada no ambiente (AI_ENABLED=false).',
+                'finished_at' => now(),
+            ]);
+
+            return;
+        }
+
         GenerateQuestionsForSkill::dispatch(
             (int) $this->record->skill_id,
             (int) $this->record->requested_count,

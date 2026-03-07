@@ -29,6 +29,7 @@ return [
     ],
 
     'ai' => [
+        'enabled' => env('AI_ENABLED', true),
         'url' => env('AI_URL', 'https://api.anthropic.com/v1/messages'),
         'key' => env('AI_KEY', ''),
     ],

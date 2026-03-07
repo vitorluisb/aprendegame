@@ -54,6 +54,7 @@ class DashboardController extends Controller
             ->latest('updated_at')
             ->first()
             ?->item?->image_url;
+        $equippedAvatarUrl = ShopItem::normalizeAvatarImageUrl($equippedAvatarUrl);
         $displayAvatarUrl = $equippedAvatarUrl ?: $this->normalizeStudentAvatarUrl($student->avatar_url);
 
         $totalXp = $student->totalXp();
@@ -74,9 +75,8 @@ class DashboardController extends Controller
 
         $recommendedPathsQuery = Path::query()
             ->where('published', true)
-            ->whereIn('path_type', Path::TYPES)
+            ->where('path_type', 'regular')
             ->with(['grade', 'subject'])
-            ->orderBy('path_type')
             ->orderByRaw('(SELECT `order` FROM grades WHERE grades.id = paths.grade_id)')
             ->limit(4);
 

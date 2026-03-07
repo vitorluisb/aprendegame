@@ -24,6 +24,12 @@ class GenerateQuestionsBulkCommand extends Command
 
     public function handle(): int
     {
+        if (! (bool) config('services.ai.enabled', true)) {
+            $this->warn('IA desativada no ambiente (AI_ENABLED=false). Nenhum job foi despachado.');
+
+            return self::FAILURE;
+        }
+
         $count = (int) $this->option('count');
         $count = max(1, min(50, $count));
         $model = (string) $this->option('model');

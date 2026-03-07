@@ -69,6 +69,7 @@ class StudentProfileController extends Controller
                 && in_array(ShopItem::normalizeType((string) $studentItem->item?->type), ShopItem::rawTypeCandidates(ShopItem::TYPE_AVATAR), true)
                 && filled($studentItem->item?->image_url))
             ?->item?->image_url;
+        $equippedAvatarUrl = ShopItem::normalizeAvatarImageUrl($equippedAvatarUrl);
 
         $personalAvatarUrl = $this->normalizeStudentAvatarUrl($student->avatar_url);
         $displayAvatarUrl = $equippedAvatarUrl ?: $personalAvatarUrl;
@@ -82,7 +83,9 @@ class StudentProfileController extends Controller
                     'name' => $studentItem->item?->name,
                     'type' => $studentItem->item?->type,
                     'slug' => $studentItem->item?->slug,
-                    'image_url' => $studentItem->item?->image_url,
+                    'image_url' => ShopItem::normalizeType((string) $studentItem->item?->type) === ShopItem::TYPE_AVATAR
+                        ? ShopItem::normalizeAvatarImageUrl($studentItem->item?->image_url)
+                        : $studentItem->item?->image_url,
                     'gem_price' => $studentItem->item?->gem_price,
                 ],
             ]);

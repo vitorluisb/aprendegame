@@ -5,15 +5,30 @@ namespace App\Domain\Gameplay\Services;
 use App\Domain\Accounts\Models\School;
 use App\Domain\Accounts\Models\Student;
 use App\Domain\Gameplay\Models\LeagueSnapshot;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
+use Throwable;
 
 class LeagueService
 {
     public function addXP(Student $student, int $xp): void
     {
-        $key = $this->weeklyKey($student->school_id);
-        Redis::zincrby($key, $xp, $student->id);
-        Redis::expire($key, 60 * 60 * 24 * 14); // manter por 14 dias
+        if ($xp <= 0) {
+            return;
+        }
+
+        try {
+            $key = $this->weeklyKey($student->school_id);
+            Redis::zincrby($key, $xp, $student->id);
+            Redis::expire($key, 60 * 60 * 24 * 14); // manter por 14 dias
+        } catch (Throwable $exception) {
+            Log::warning('Falha ao atualizar ranking semanal.', [
+                'student_id' => $student->id,
+                'school_id' => $student->school_id,
+                'xp' => $xp,
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 
     public function getLeaderboard(?int $schoolId, int $limit = 20): array

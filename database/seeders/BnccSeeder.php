@@ -131,21 +131,6 @@ class BnccSeeder extends Seeder
             }
         }
 
-        // ── ENEM — 4 grandes áreas (associadas ao 3º ano EM) ───────────────────
-        $enemPaths = [
-            ['subject' => 'portugues',  'title' => 'ENEM — Linguagens, Códigos e suas Tecnologias'],
-            ['subject' => 'matematica', 'title' => 'ENEM — Matemática e suas Tecnologias'],
-            ['subject' => 'biologia',   'title' => 'ENEM — Ciências da Natureza e suas Tecnologias'],
-            ['subject' => 'historia',   'title' => 'ENEM — Ciências Humanas e Sociais Aplicadas'],
-        ];
-
-        foreach ($enemPaths as $item) {
-            Path::updateOrCreate(
-                ['grade_id' => $grades['EM03']->id, 'subject_id' => $subjects[$item['subject']]->id, 'path_type' => 'enem'],
-                ['title' => $item['title'], 'published' => true]
-            );
-        }
-
     }
 
     /**

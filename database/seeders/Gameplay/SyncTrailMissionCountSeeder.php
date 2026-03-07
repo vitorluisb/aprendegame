@@ -49,7 +49,7 @@ class SyncTrailMissionCountSeeder extends Seeder
                         [
                             'title' => "Missão {$order} - {$path->subject->name}",
                             'node_type' => $isBossMission ? 'boss' : 'lesson',
-                            'xp_reward' => $isBossMission ? 120 : 100,
+                            'xp_reward' => $isBossMission ? 60 : 40,
                             'skill_ids' => $skillIds->values()->all(),
                             'published' => true,
                         ]
@@ -65,7 +65,7 @@ class SyncTrailMissionCountSeeder extends Seeder
                             'order' => 1,
                             'interaction_count' => 10,
                             'difficulty' => min(5, max(1, (int) ceil($order / 6))),
-                            'xp_reward' => $isBossMission ? 120 : 100,
+                            'xp_reward' => $isBossMission ? 60 : 40,
                             'published' => true,
                         ]
                     );

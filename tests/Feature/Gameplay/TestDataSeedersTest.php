@@ -10,7 +10,7 @@ use App\Domain\Gameplay\Models\Lesson;
 use Database\Seeders\Gameplay\StudentNeuronsSeeder;
 use Database\Seeders\Gameplay\TrailContentSeeder;
 
-it('seeds 2000 neurons for each student without duplicating seed transaction', function () {
+it('seeds 500 neurons for each student without duplicating seed transaction', function () {
     $students = Student::factory()->count(2)->create();
 
     $this->seed(StudentNeuronsSeeder::class);
@@ -20,7 +20,7 @@ it('seeds 2000 neurons for each student without duplicating seed transaction', f
         $freshStudent = $student->fresh();
 
         expect($freshStudent)->not->toBeNull();
-        expect($freshStudent?->totalGems())->toBe(2000);
+        expect($freshStudent?->totalGems())->toBe(500);
         expect(
             $freshStudent?->gemTransactions()
                 ->where('source', 'seed_neurons')

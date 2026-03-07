@@ -45,7 +45,7 @@ class DailyMissionForm
                             ->integer()
                             ->required()
                             ->minValue(1)
-                            ->default(10),
+                            ->default(5),
 
                         Textarea::make('description')
                             ->label('Descrição')

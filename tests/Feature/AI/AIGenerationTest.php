@@ -11,6 +11,10 @@ use App\Domain\Gameplay\Models\Question;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
+beforeEach(function () {
+    config()->set('services.ai.enabled', true);
+});
+
 it('dispatching job is queued', function () {
     Queue::fake();
 

@@ -20,7 +20,7 @@ class StudentNeuronsSeeder extends Seeder
                         'source' => 'seed_neurons',
                     ],
                     [
-                        'amount' => 2000,
+                        'amount' => 500,
                         'created_at' => now(),
                     ]
                 );

@@ -74,7 +74,7 @@ class LeagueController extends Controller
                 'student' => [
                     'id' => $studentId,
                     'name' => $studentsById[$studentId]->name ?? "Aluno #{$studentId}",
-                    'avatar_url' => $equippedAvatarByStudentId[$studentId]?->item?->image_url
+                    'avatar_url' => ShopItem::normalizeAvatarImageUrl($equippedAvatarByStudentId[$studentId]?->item?->image_url)
                         ?? $this->normalizeStudentAvatarUrl($studentsById[$studentId]->avatar_url ?? null)
                         ?? null,
                 ],

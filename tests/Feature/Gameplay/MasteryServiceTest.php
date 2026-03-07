@@ -35,6 +35,7 @@ it('mastery score decreases on wrong answer', function () {
     expect($mastery->mastery_score)->toBe(35);
     expect($mastery->interval_days)->toBe(1);
     expect($mastery->consecutive_correct)->toBe(0);
+    expect($mastery->next_review_at?->lessThanOrEqualTo(now()))->toBeTrue();
 });
 
 it('interval advances after 2 consecutive correct answers', function () {
