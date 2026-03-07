@@ -106,36 +106,31 @@ class TrailContentSeeder extends Seeder
 
     private function ensureLessonQuestions(Lesson $lesson, Collection $skillIds, int $targetCount): void
     {
-        $existingQuestionCount = $lesson->questions()->count();
+        $existingQuestionIds = $lesson->questions()
+            ->pluck('questions.id');
+        $existingQuestionCount = $existingQuestionIds->count();
         $missingCount = $targetCount - $existingQuestionCount;
 
         if ($missingCount <= 0) {
             return;
         }
 
+        $questionIdsToAttach = Question::query()
+            ->where('status', 'published')
+            ->whereIn('skill_id', $skillIds->values()->all())
+            ->whereNotIn('id', $existingQuestionIds)
+            ->inRandomOrder()
+            ->limit($missingCount)
+            ->pluck('id');
+
+        if ($questionIdsToAttach->isEmpty()) {
+            return;
+        }
+
         $nextOrder = $existingQuestionCount + 1;
 
-        for ($index = 1; $index <= $missingCount; $index++) {
-            $optionA = fake()->sentence(3);
-            $optionB = fake()->sentence(3);
-            $optionC = fake()->sentence(3);
-            $optionD = fake()->sentence(3);
-            $options = [$optionA, $optionB, $optionC, $optionD];
-            $correctAnswer = $options[array_rand($options)];
-
-            $question = Question::query()->create([
-                'skill_id' => $skillIds->random(),
-                'type' => 'multiple_choice',
-                'difficulty' => fake()->numberBetween(1, 5),
-                'prompt' => fake()->sentence(10).'?',
-                'options' => $options,
-                'correct_answer' => $correctAnswer,
-                'explanation' => fake()->sentence(14),
-                'status' => 'published',
-                'ai_generated' => false,
-            ]);
-
-            $lesson->questions()->attach($question->id, ['order' => $nextOrder]);
+        foreach ($questionIdsToAttach as $questionId) {
+            $lesson->questions()->attach($questionId, ['order' => $nextOrder]);
             $nextOrder++;
         }
     }

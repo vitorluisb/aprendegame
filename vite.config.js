@@ -22,6 +22,9 @@ export default defineConfig({
             manifest: {
                 name: 'AprendeGame',
                 short_name: 'AprendeGame',
+                start_url: '/',
+                scope: '/',
+                lang: 'pt-BR',
                 theme_color: '#1565C0',
                 icons: [
                     { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },

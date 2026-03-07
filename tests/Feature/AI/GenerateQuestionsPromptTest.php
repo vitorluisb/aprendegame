@@ -50,3 +50,23 @@ it('keeps regular generation rules for 6th to 9th grade fundamental and above', 
     expect($prompt)->not->toContain('Enunciado curto: até 12 palavras');
     expect($prompt)->toContain('Equilíbrio entre raciocínio, interpretação e aplicação prática');
 });
+
+it('requires fixed 10 15 5 difficulty split when generating 30 questions', function () {
+    $grade = Grade::factory()->create([
+        'name' => '4º Ano EF',
+        'code' => 'EF04',
+        'stage' => 'fundamental_1',
+        'order' => 2,
+    ]);
+    $subject = Subject::factory()->create(['name' => 'Matemática', 'slug' => 'matematica']);
+    $skill = BnccSkill::factory()->create([
+        'grade_id' => $grade->id,
+        'subject_id' => $subject->id,
+        'code' => 'EF04MA01',
+        'description' => 'Ler e escrever números naturais.',
+    ]);
+
+    $prompt = GenerateQuestionsPrompt::build($skill, 30);
+
+    expect($prompt)->toContain('Dificuldade variada: exatamente 10 fáceis (1-2), 15 médias (3) e 5 difíceis (4-5)');
+});
