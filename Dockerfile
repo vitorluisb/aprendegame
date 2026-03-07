@@ -9,7 +9,7 @@ COPY public ./public
 COPY vite.config.js ./
 RUN npm run build
 
-FROM php:8.5-fpm-bookworm AS app
+FROM php:8.4-fpm-bookworm AS app
 WORKDIR /var/www/html
 
 RUN apt-get update \
@@ -29,6 +29,7 @@ RUN apt-get update \
         gd \
         intl \
         mbstring \
+        pcntl\
         pdo_mysql \
         opcache \
         zip \

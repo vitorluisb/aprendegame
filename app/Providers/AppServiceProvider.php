@@ -26,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if (app()->environment('production')) {
+            \URL::forceScheme('https');
+        }
         Route::model('schoolClass', SchoolClass::class);
         Gate::policy(SchoolClass::class, ClassPolicy::class);
 
