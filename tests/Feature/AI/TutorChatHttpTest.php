@@ -3,6 +3,7 @@
 use App\Domain\Accounts\Models\Student;
 use App\Domain\AI\Models\TutorMessage;
 use App\Models\User;
+use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 
 it('student can view tutor chat page', function () {
@@ -40,6 +41,9 @@ it('user with student profile can access tutor page with non-student role', func
 });
 
 it('student can send a valid tutor message and receive response', function () {
+    config()->set('services.ai.url', '');
+    config()->set('services.ai.key', '');
+
     $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
     $student = Student::factory()->create(['user_id' => $user->id, 'school_id' => null]);
 
@@ -59,6 +63,46 @@ it('student can send a valid tutor message and receive response', function () {
     expect($messages[0]->blocked)->toBeFalse();
     expect($messages[1]->role)->toBe('tutor');
     expect($messages[1]->content)->toContain('Vamos por partes');
+});
+
+it('tutor uses ai provider response when configured', function () {
+    config()->set('services.ai.url', 'https://openrouter.ai/api/v1/chat/completions');
+    config()->set('services.ai.key', 'test-key');
+
+    Http::fake([
+        '*' => Http::response([
+            'choices' => [
+                [
+                    'message' => [
+                        'content' => 'Explicando passo a passo com exemplo simples.',
+                    ],
+                ],
+            ],
+            'usage' => [
+                'prompt_tokens' => 42,
+                'completion_tokens' => 84,
+            ],
+        ], 200),
+    ]);
+
+    $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
+    $student = Student::factory()->create(['user_id' => $user->id, 'school_id' => null]);
+
+    $this->actingAs($user)
+        ->from('/tutor')
+        ->post('/tutor/mensagens', ['message' => 'Me ajuda com divisão'])
+        ->assertRedirect('/tutor');
+
+    $messages = TutorMessage::query()
+        ->where('student_id', $student->id)
+        ->orderBy('id')
+        ->get();
+
+    expect($messages)->toHaveCount(2);
+    expect($messages[1]->role)->toBe('tutor');
+    expect($messages[1]->content)->toContain('Explicando passo a passo');
+    expect($messages[1]->prompt_tokens)->toBe(42);
+    expect($messages[1]->result_tokens)->toBe(84);
 });
 
 it('blocked content stores blocked message and returns tutor error', function () {

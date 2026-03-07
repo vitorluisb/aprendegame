@@ -9,6 +9,7 @@ use App\Domain\AI\Services\TutorChatService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTutorMessageRequest;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -60,7 +61,7 @@ class TutorChatController extends Controller
         ]);
     }
 
-    public function store(StoreTutorMessageRequest $request): RedirectResponse
+    public function store(StoreTutorMessageRequest $request): RedirectResponse|JsonResponse
     {
         /** @var User $user */
         $user = auth()->user();
@@ -68,7 +69,7 @@ class TutorChatController extends Controller
         $message = trim($request->string('message')->toString());
 
         if ($this->moderationService->isBlocked($message)) {
-            TutorMessage::query()->create([
+            $blockedMessage = TutorMessage::query()->create([
                 'student_id' => $student->id,
                 'role' => 'student',
                 'content' => $message,
@@ -78,18 +79,68 @@ class TutorChatController extends Controller
                 'result_tokens' => 0,
             ]);
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Mensagem bloqueada pela moderação. Reescreva a pergunta com foco no conteúdo escolar.',
+                    'blocked_message' => [
+                        'id' => $blockedMessage->id,
+                        'role' => $blockedMessage->role,
+                        'content' => $blockedMessage->content,
+                        'blocked' => $blockedMessage->blocked,
+                        'blocked_reason' => $blockedMessage->blocked_reason,
+                        'created_at' => $blockedMessage->created_at?->format('Y-m-d H:i:s'),
+                    ],
+                    'remaining_messages' => $this->moderationService->remainingMessages($student),
+                ], 422);
+            }
+
             return back()->withErrors([
                 'tutor' => 'Mensagem bloqueada pela moderação. Reescreva a pergunta com foco no conteúdo escolar.',
             ]);
         }
 
         if ($this->moderationService->hasReachedDailyLimit($student)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Você atingiu seu limite diário de mensagens do tutor.',
+                    'remaining_messages' => $this->moderationService->remainingMessages($student),
+                ], 422);
+            }
+
             return back()->withErrors([
                 'tutor' => 'Você atingiu seu limite diário de mensagens do tutor.',
             ]);
         }
 
-        $this->tutorChatService->answer($student, $message);
+        $tutorMessage = $this->tutorChatService->answer($student, $message);
+
+        if ($request->expectsJson()) {
+            $studentMessage = TutorMessage::query()
+                ->where('student_id', $student->id)
+                ->where('role', 'student')
+                ->latest('id')
+                ->first();
+
+            return response()->json([
+                'student_message' => [
+                    'id' => $studentMessage?->id,
+                    'role' => $studentMessage?->role,
+                    'content' => $studentMessage?->content,
+                    'blocked' => (bool) ($studentMessage?->blocked ?? false),
+                    'blocked_reason' => $studentMessage?->blocked_reason,
+                    'created_at' => $studentMessage?->created_at?->format('Y-m-d H:i:s'),
+                ],
+                'tutor_message' => [
+                    'id' => $tutorMessage->id,
+                    'role' => $tutorMessage->role,
+                    'content' => $tutorMessage->content,
+                    'blocked' => $tutorMessage->blocked,
+                    'blocked_reason' => $tutorMessage->blocked_reason,
+                    'created_at' => $tutorMessage->created_at?->format('Y-m-d H:i:s'),
+                ],
+                'remaining_messages' => $this->moderationService->remainingMessages($student),
+            ]);
+        }
 
         return back();
     }

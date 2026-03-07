@@ -1,7 +1,8 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
+import axios from 'axios';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
     messages: { type: Array, default: () => [] },
@@ -10,19 +11,58 @@ const props = defineProps({
 });
 
 const page = usePage();
-const tutorError = computed(() => page.props.errors?.tutor ?? null);
+const localMessages = ref([...props.messages]);
+const localRemaining = ref(props.remaining_messages);
+const localTutorError = ref(null);
+const tutorError = computed(() => localTutorError.value ?? page.props.errors?.tutor ?? null);
 
 const form = useForm({
     message: '',
 });
 
-function submit() {
-    form.post('/tutor/mensagens', {
-        preserveScroll: true,
-        onSuccess: () => {
-            form.reset('message');
-        },
-    });
+async function submit() {
+    if (form.processing) {
+        return;
+    }
+
+    localTutorError.value = null;
+    form.clearErrors();
+    form.processing = true;
+
+    try {
+        const response = await axios.post('/tutor/mensagens', {
+            message: form.message,
+        }, {
+            headers: {
+                Accept: 'application/json',
+            },
+        });
+
+        if (response.data?.student_message?.id) {
+            localMessages.value.push(response.data.student_message);
+        }
+
+        if (response.data?.tutor_message?.id) {
+            localMessages.value.push(response.data.tutor_message);
+        }
+
+        if (typeof response.data?.remaining_messages === 'number') {
+            localRemaining.value = response.data.remaining_messages;
+        }
+
+        form.reset('message');
+    } catch (error) {
+        const response = error?.response;
+        const message = response?.data?.message;
+
+        if (response?.status === 422 && typeof message === 'string') {
+            localTutorError.value = message;
+        } else {
+            localTutorError.value = 'Não foi possível enviar agora. Tente novamente.';
+        }
+    } finally {
+        form.processing = false;
+    }
 }
 
 function roleLabel(role) {
@@ -37,10 +77,10 @@ function roleLabel(role) {
         <section class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 p-5 text-white shadow-xl">
             <div class="game-shimmer pointer-events-none absolute inset-0 opacity-20" />
             <p class="text-xs font-semibold uppercase tracking-wide text-white/80">Tutor IA • Limite diário</p>
-            <p class="mt-1 text-3xl font-black">{{ daily_limit - remaining_messages }}/{{ daily_limit }}</p>
-            <p class="mt-1 text-xs text-white/80">Restantes: {{ remaining_messages }}</p>
+            <p class="mt-1 text-3xl font-black">{{ daily_limit - localRemaining }}/{{ daily_limit }}</p>
+            <p class="mt-1 text-xs text-white/80">Restantes: {{ localRemaining }}</p>
             <div class="mt-3 h-2 overflow-hidden rounded-full bg-white/30">
-                <div class="h-full rounded-full bg-white transition-all" :style="{ width: `${Math.max(0, Math.min(100, ((daily_limit - remaining_messages) / daily_limit) * 100))}%` }" />
+                <div class="h-full rounded-full bg-white transition-all" :style="{ width: `${Math.max(0, Math.min(100, ((daily_limit - localRemaining) / daily_limit) * 100))}%` }" />
             </div>
         </section>
 
@@ -56,7 +96,7 @@ function roleLabel(role) {
 
             <div class="max-h-[48vh] space-y-2 overflow-y-auto pr-1">
             <article
-                v-for="entry in messages"
+                v-for="entry in localMessages"
                 :key="entry.id"
                 class="rounded-2xl border px-3 py-2"
                 :class="entry.role === 'student' ? 'ml-6 border-indigo-200 bg-indigo-50' : 'mr-6 border-emerald-200 bg-emerald-50'"
@@ -66,7 +106,7 @@ function roleLabel(role) {
                 <p v-if="entry.blocked && entry.blocked_reason" class="mt-1 text-xs text-red-600">{{ entry.blocked_reason }}</p>
             </article>
 
-            <div v-if="!messages.length" class="rounded-xl border border-slate-200 bg-slate-50 p-5 text-center text-sm text-slate-500">
+            <div v-if="!localMessages.length" class="rounded-xl border border-slate-200 bg-slate-50 p-5 text-center text-sm text-slate-500">
                 Faça sua primeira pergunta para o tutor.
             </div>
             </div>
