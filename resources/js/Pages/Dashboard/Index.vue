@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useUiSfx } from '@/Composables/useUiSfx';
 
 const props = defineProps({
@@ -12,6 +12,7 @@ const props = defineProps({
 
 const page = usePage();
 const xpPercent = computed(() => props.student ? props.student.xp_in_level : 0);
+const showGradeConfigurationNotice = ref(Boolean(props.student?.needs_grade_configuration));
 const equippedFrameStyle = computed(() => page.props.gameplay_customization?.frame?.style ?? null);
 const equippedFrameClass = computed(() => {
     const slug = page.props.gameplay_customization?.frame?.slug;
@@ -74,6 +75,10 @@ function isMp4Avatar(url) {
 
     return /\.mp4(?:$|[?#])/i.test(url);
 }
+
+function closeGradeConfigurationNotice() {
+    showGradeConfigurationNotice.value = false;
+}
 </script>
 
 <template>
@@ -82,6 +87,28 @@ function isMp4Avatar(url) {
 
         <!-- Dashboard do aluno -->
         <template v-if="role === 'student' && student">
+            <section
+                v-if="showGradeConfigurationNotice"
+                class="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 shadow-sm"
+            >
+                <div class="flex items-start justify-between gap-2">
+                    <span class="text-sm">
+                        Complete seu perfil: configure sua série/ano em
+                        <Link href="/perfil" class="font-semibold underline decoration-amber-500 underline-offset-2">
+                            Perfil
+                        </Link>.
+                    </span>
+                    <button
+                        type="button"
+                        class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-white text-sm font-bold text-amber-700 hover:bg-amber-100"
+                        aria-label="Fechar aviso"
+                        @click="closeGradeConfigurationNotice"
+                    >
+                        ×
+                    </button>
+                </div>
+            </section>
+
             <!-- Boas-vindas + XP -->
             <section class="relative overflow-hidden rounded-2xl p-5 text-white shadow-xl" :style="heroStyle">
                 <div class="game-shimmer pointer-events-none absolute inset-0 opacity-30" />

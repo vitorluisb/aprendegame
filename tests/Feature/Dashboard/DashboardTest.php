@@ -114,6 +114,25 @@ it('student dashboard loads successfully', function () {
             ->has('student')
             ->where('student.name', $user->name)
             ->where('student.total_gems', 25)
+            ->where('student.needs_grade_configuration', true)
+        );
+});
+
+it('student dashboard marks grade notice as configured when student has grade', function () {
+    $user = User::factory()->create(['role' => 'student', 'school_id' => null]);
+    $grade = Grade::factory()->create();
+
+    Student::factory()->create([
+        'user_id' => $user->id,
+        'school_id' => null,
+        'grade_id' => $grade->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/dashboard')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('student.needs_grade_configuration', false)
         );
 });
 
